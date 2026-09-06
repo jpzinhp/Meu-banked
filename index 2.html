@@ -1,0 +1,2480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>AI Website Hunter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#0A0B10; --bg2:#0F1117; --panel:#14161E; --panel2:#191C26;
+  --line:#232633; --text:#E9EAF0; --muted:#8B8FA3; --muted2:#5C6079;
+  --accent:#6C63F5; --accent2:#8B84FF; --gold:#E3B361; --green:#4FCE8E; --red:#F0665F;
+  --radius:14px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:'Inter',sans-serif; background:var(--bg); color:var(--text);
+  min-height:100vh; overflow-x:hidden;
+}
+h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+button{font-family:inherit; cursor:pointer;}
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px;}
+
+#app{display:flex; min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+  width:230px; background:var(--bg2); border-right:1px solid var(--line);
+  padding:22px 14px; flex-shrink:0; position:sticky; top:0; height:100vh;
+}
+.brand{display:flex; align-items:center; gap:10px; padding:0 8px 22px 8px; margin-bottom:14px; border-bottom:1px solid var(--line);}
+.brand-mark{width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;}
+.brand-name{font-weight:600; font-size:14.5px; line-height:1.2;}
+.brand-sub{font-size:10.5px; color:var(--muted2);}
+.nav-item{
+  display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px;
+  color:var(--muted); font-size:13.5px; font-weight:500; cursor:pointer; margin-bottom:2px;
+  transition:background .15s, color .15s;
+}
+.nav-item:hover{background:var(--panel); color:var(--text);}
+.nav-item.active{background:var(--panel2); color:var(--text); box-shadow:inset 2px 0 0 var(--accent);}
+.nav-icon{width:16px; text-align:center; font-size:14px; opacity:.85;}
+
+/* MAIN */
+.main{flex:1; min-width:0; padding:26px 34px 60px 34px;}
+.topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:26px;}
+.topbar h1{font-size:19px; font-weight:600;}
+.hello{color:var(--muted); font-size:13px; margin-top:2px;}
+.demo-pill{
+  background:rgba(227,179,97,.12); color:var(--gold); border:1px solid rgba(227,179,97,.3);
+  font-size:11px; font-weight:600; padding:4px 10px; border-radius:100px; letter-spacing:.02em;
+}
+
+/* CARDS GRID */
+.stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+@media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px;}
+.stat-label{font-size:12px; color:var(--muted); margin-bottom:8px;}
+.stat-value{font-size:26px; font-weight:700; font-family:'Space Grotesk',sans-serif;}
+.stat-delta{font-size:11.5px; color:var(--green); margin-top:4px;}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px;}
+.panel-title{font-size:14.5px; font-weight:600; margin-bottom:14px;}
+
+/* chart bars fake */
+.chart{display:flex; align-items:flex-end; gap:8px; height:130px; margin-top:6px;}
+.bar{flex:1; background:linear-gradient(180deg,var(--accent2),var(--accent)); border-radius:5px 5px 2px 2px; position:relative;}
+.chart-labels{display:flex; gap:8px; margin-top:8px;}
+.chart-labels span{flex:1; text-align:center; font-size:10.5px; color:var(--muted2);}
+
+/* FILTERS SCREEN */
+.filters-form{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:18px;}
+@media(max-width:900px){.filters-form{grid-template-columns:1fr;}}
+.field label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:500;}
+.field select, .field input{
+  width:100%; background:var(--bg2); border:1px solid var(--line); color:var(--text);
+  padding:9px 11px; border-radius:9px; font-size:13.5px;
+}
+.field select:focus, .field input:focus{outline:none; border-color:var(--accent);}
+.chip-group{display:flex; flex-wrap:wrap; gap:8px;}
+.chip{
+  padding:7px 13px; border-radius:100px; border:1px solid var(--line); background:var(--bg2);
+  font-size:12.5px; color:var(--muted); user-select:none;
+}
+.chip.selected{background:rgba(108,99,245,.15); border-color:var(--accent); color:var(--accent2);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent2)); color:white; border:none;
+  padding:12px 22px; border-radius:10px; font-weight:600; font-size:13.5px; margin-top:6px;
+}
+.btn-primary:disabled{opacity:.6;}
+.btn-secondary{
+  background:transparent; border:1px solid var(--line); color:var(--text); padding:9px 16px; border-radius:9px; font-size:13px; font-weight:500;
+}
+.btn-ghost{background:transparent; border:none; color:var(--accent2); font-size:12.5px; font-weight:500;}
+
+.loading-box{display:none; padding:22px; text-align:center;}
+.loading-box.show{display:block;}
+.progress-track{height:6px; background:var(--bg2); border-radius:10px; overflow:hidden; margin:14px 0 10px 0;}
+.progress-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--gold)); transition:width .4s;}
+.loading-step{font-size:13px; color:var(--muted); min-height:18px;}
+
+/* COMPANY GRID */
+.company-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:18px;}
+@media(max-width:1100px){.company-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:700px){.company-grid{grid-template-columns:1fr;}}
+.company-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:10px;}
+.company-top{display:flex; gap:12px; align-items:center;}
+.company-logo{width:42px; height:42px; border-radius:10px; background:var(--bg2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; color:var(--muted); flex-shrink:0;}
+.company-name{font-size:14.5px; font-weight:600;}
+.company-meta{font-size:11.5px; color:var(--muted); margin-top:2px;}
+.demo-tag{display:inline-block; font-size:9.5px; font-weight:700; color:var(--gold); background:rgba(227,179,97,.12); padding:2px 6px; border-radius:5px; margin-left:6px; letter-spacing:.03em;}
+.score-row{display:flex; align-items:center; justify-content:space-between; background:var(--bg2); border-radius:9px; padding:9px 12px;}
+.score-num{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:17px;}
+.score-label{font-size:10.5px; padding:3px 8px; border-radius:100px; font-weight:600;}
+.score-excellent{background:rgba(79,206,142,.15); color:var(--green);}
+.score-high{background:rgba(108,99,245,.15); color:var(--accent2);}
+.score-medium{background:rgba(227,179,97,.15); color:var(--gold);}
+.score-low{background:rgba(240,102,95,.15); color:var(--red);}
+.status-badges{display:flex; gap:6px; flex-wrap:wrap;}
+.badge{font-size:10.5px; color:var(--muted); border:1px solid var(--line); padding:3px 8px; border-radius:6px;}
+.card-actions{display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;}
+.btn-mini{flex:1; min-width:70px; font-size:11.5px; padding:8px 8px; border-radius:8px; border:1px solid var(--line); background:var(--bg2); color:var(--text); font-weight:500;}
+.btn-mini.primary{background:rgba(108,99,245,.15); border-color:var(--accent); color:var(--accent2);}
+
+/* MODAL */
+.overlay{position:fixed; inset:0; background:rgba(6,7,10,.7); backdrop-filter:blur(3px); display:none; align-items:flex-start; justify-content:center; z-index:50; padding:40px 16px; overflow-y:auto;}
+.overlay.show{display:flex;}
+.modal{background:var(--panel); border:1px solid var(--line); border-radius:16px; width:100%; max-width:640px; padding:26px; position:relative;}
+.modal-close{position:absolute; top:16px; right:18px; background:none; border:none; color:var(--muted); font-size:18px;}
+.modal h2{font-size:17px; margin-bottom:4px;}
+.modal .sub{font-size:12.5px; color:var(--muted); margin-bottom:18px;}
+.analysis-section{margin-bottom:14px;}
+.analysis-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent2); font-weight:600; margin-bottom:5px;}
+.analysis-text{font-size:13.5px; color:var(--text); line-height:1.55;}
+.tag-row{display:flex; gap:8px; flex-wrap:wrap;}
+.tag{font-size:11.5px; background:var(--bg2); border:1px solid var(--line); padding:4px 10px; border-radius:100px; color:var(--muted);}
+.swatch-row{display:flex; gap:8px; margin-top:4px;}
+.swatch{width:26px; height:26px; border-radius:7px; border:1px solid var(--line);}
+
+/* SITE PREVIEW */
+.site-shell{border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-top:14px; font-family:'Inter',sans-serif;}
+.site-nav{display:flex; align-items:center; justify-content:space-between; padding:14px 28px; background:rgba(0,0,0,.35); position:relative; z-index:2;}
+.site-nav .site-logo{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:#fff;}
+.site-nav .site-links{display:flex; gap:18px; font-size:12px; color:rgba(255,255,255,.8);}
+.site-nav .site-links a{color:inherit; text-decoration:none; cursor:pointer;}
+.site-nav .site-links a:hover{color:#fff;}
+.site-cta[href], a .site-cta{cursor:pointer;}
+.site-mode-toggle{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+.site-mode-btn{
+  padding:7px 14px; border-radius:100px; font-size:12px; font-weight:600; border:1px solid var(--line);
+  background:var(--bg2); color:var(--muted); cursor:pointer;
+}
+.site-mode-btn.active{background:rgba(108,99,245,.15); border-color:var(--accent); color:var(--accent2);}
+#site-preview-wrap.locked .editable{outline:none !important; cursor:default !important;}
+#site-preview-wrap.locked .editable:hover{outline:none !important;}
+#site-preview-wrap.locked .img-edit-overlay{display:none !important;}
+#site-preview-wrap.locked .img-edit{cursor:default;}
+#site-preview-wrap.locked .editable[contenteditable]{pointer-events:none;}
+.site-hero{position:relative; padding:70px 28px 60px 28px; text-align:center; overflow:hidden; background:#1a1c26;}
+/* Variantes de layout — cada empresa recebe uma, pra sites do mesmo nicho não ficarem clonados */
+.site-shell.tpl-split .site-hero{text-align:left; padding:56px 40px; display:flex; align-items:center; min-height:340px;}
+.site-shell.tpl-split .site-hero-inner{max-width:50%;}
+.site-shell.tpl-split .site-cta-row{justify-content:flex-start;}
+.site-shell.tpl-minimal .site-hero{padding:110px 28px; text-align:center;}
+.site-shell.tpl-minimal .site-hero::before{background:linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55));}
+.site-shell.tpl-minimal .site-hero h3{font-size:36px; letter-spacing:-0.02em;}
+.site-shell.tpl-sharp .img-edit, .site-shell.tpl-sharp .site-mini-card, .site-shell.tpl-sharp .site-testi-card{border-radius:2px !important;}
+.site-shell.tpl-sharp .site-cta{border-radius:2px;}
+.site-shell.tpl-round .img-edit, .site-shell.tpl-round .site-mini-card, .site-shell.tpl-round .site-testi-card{border-radius:22px !important;}
+.site-shell.tpl-round .site-cta{border-radius:100px;}
+.site-shell.tpl-round .site-about-grid .img-edit{border-radius:28px !important;}
+.site-hero-bg{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; display:block;}
+.site-hero::before{content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.75)); z-index:1;}
+.site-hero-inner{position:relative; z-index:2;}
+.site-hero .img-edit-btn{z-index:3;}
+.site-eyebrow{display:inline-block; font-size:11px; letter-spacing:.04em; color:rgba(255,255,255,.75); background:rgba(255,255,255,.1); padding:5px 12px; border-radius:100px; margin-bottom:14px;}
+.site-hero h3{font-size:30px; margin-bottom:10px; color:#fff; font-family:'Space Grotesk',sans-serif; max-width:560px; margin-left:auto; margin-right:auto;}
+.site-hero p{font-size:14px; color:rgba(255,255,255,.85); max-width:460px; margin:0 auto 22px auto; line-height:1.5;}
+.site-cta-row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+.site-cta{display:inline-block; padding:11px 24px; border-radius:9px; font-size:13px; font-weight:600; background:#fff; color:#111;}
+.site-cta.outline{background:transparent; border:1px solid rgba(255,255,255,.5); color:#fff;}
+.site-stats{display:flex; justify-content:center; gap:36px; padding:20px 28px; background:var(--bg2); border-top:1px solid var(--line); flex-wrap:wrap;}
+.site-stat{text-align:center;}
+.site-stat b{display:block; font-family:'Space Grotesk',sans-serif; font-size:19px;}
+.site-stat span{font-size:10.5px; color:var(--muted2);}
+.site-section{padding:36px 28px; background:var(--bg2); border-top:1px solid var(--line);}
+.site-section.alt{background:var(--panel2);}
+.site-eyebrow-sm{font-size:10.5px; letter-spacing:.06em; color:var(--accent2); font-weight:600; margin-bottom:6px; display:block;}
+.site-section h4{font-size:18px; margin-bottom:6px; color:var(--text); font-family:'Space Grotesk',sans-serif;}
+.site-section .sec-desc{font-size:12.5px; color:var(--muted); max-width:480px; margin-bottom:18px; line-height:1.5;}
+.site-about-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:22px; align-items:center;}
+.site-about-grid img{width:100%; border-radius:12px; object-fit:cover; height:220px;}
+.site-testi-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+.site-team-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+.site-team-card{text-align:center;}
+.site-team-card .img-edit{width:100px; height:100px; border-radius:50%; margin:0 auto 10px auto;}
+.site-team-card strong{display:block; font-size:13px; margin-bottom:2px;}
+.site-team-card span{font-size:11.5px; color:var(--muted);}
+@media(max-width:600px){.site-team-grid{grid-template-columns:1fr 1fr;}}
+.site-testi-card{background:var(--panel); border:1px solid var(--line); border-radius:11px; padding:16px;}
+.site-testi-card .stars{color:var(--gold); font-size:12px; margin-bottom:8px;}
+.site-testi-card p{font-size:12.5px; color:var(--text); line-height:1.5; margin-bottom:10px;}
+.site-testi-who{display:flex; align-items:center; gap:8px;}
+.site-testi-who img{width:30px; height:30px; border-radius:50%; object-fit:cover;}
+.site-testi-who span{font-size:11.5px; color:var(--muted);}
+.site-faq-item{border-bottom:1px solid var(--line); padding:12px 0;}
+.site-faq-item strong{display:block; font-size:13px; margin-bottom:5px;}
+.site-faq-item p{font-size:12px; color:var(--muted); line-height:1.5;}
+.site-cta-banner{padding:34px 28px; text-align:center;}
+.site-cta-banner h4{font-size:19px; color:#fff; margin-bottom:8px; font-family:'Space Grotesk',sans-serif;}
+.site-cta-banner p{font-size:12.5px; color:rgba(255,255,255,.8); margin-bottom:16px;}
+.site-contact-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+.site-contact-info .ci-row{display:flex; gap:10px; font-size:12.5px; color:var(--text); margin-bottom:10px; align-items:flex-start;}
+.site-contact-info .ci-row .ci-ico{color:var(--accent2); flex-shrink:0;}
+.site-contact-form input, .site-contact-form textarea{width:100%; background:var(--panel); border:1px solid var(--line); color:var(--text); padding:9px 11px; border-radius:8px; font-size:12.5px; margin-bottom:9px; font-family:inherit;}
+.site-footer{padding:22px 28px; background:#0A0A0F; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;}
+.site-footer .sf-logo{font-family:'Space Grotesk',sans-serif; font-weight:700; color:#fff; font-size:13.5px;}
+.site-footer .sf-links{display:flex; gap:14px; font-size:11px; color:var(--muted);}
+.image-credit{font-size:9.5px; color:var(--muted2); text-align:center; padding:6px; background:#0A0A0F;}
+
+/* Imagens editáveis (trocar / enviar própria foto) */
+.img-edit{position:relative; overflow:hidden; cursor:pointer;}
+.img-edit img{width:100%; height:100%; object-fit:cover; display:block; transition:filter .15s;}
+.img-edit .img-edit-overlay{
+  position:absolute; inset:0; background:rgba(0,0,0,.55); opacity:0; transition:opacity .15s;
+  display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; padding:6px;
+}
+.img-edit:hover .img-edit-overlay{opacity:1;}
+.img-edit:hover img{filter:brightness(.7);}
+.img-edit-btn{
+  background:rgba(255,255,255,.95); color:#111; border:none; padding:5px 9px; border-radius:7px;
+  font-size:10.5px; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+.site-grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+.site-mini-card{background:var(--panel); border:1px solid var(--line); border-radius:11px; overflow:hidden; font-size:12px; box-shadow:0 4px 14px rgba(0,0,0,.18);}
+.site-mini-card .img-edit{height:110px;}
+.site-mini-card .smc-body{padding:12px;}
+.site-mini-card .smc-body strong{display:block; font-size:12.5px; margin-bottom:4px;}
+.site-mini-card .smc-body span{font-size:11px; color:var(--muted);}
+.site-gallery{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+.site-gallery .img-edit{height:100px; border-radius:9px;}
+.site-about-grid .img-edit{border-radius:12px; height:240px; box-shadow:0 8px 24px rgba(0,0,0,.22);}
+.site-hero.img-edit{height:auto;}
+.site-hero.img-edit .img-edit-overlay{align-items:flex-end; justify-content:flex-end; padding:16px;}
+.editable{outline:1px dashed transparent; border-radius:4px; padding:1px 3px; cursor:text;}
+.editable:hover{outline-color:var(--accent2);}
+.editable:focus{outline:1px solid var(--accent2); background:rgba(108,99,245,.08);}
+
+/* KANBAN */
+.kanban{display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; margin-top:16px;}
+.kanban-col{background:var(--bg2); border:1px solid var(--line); border-radius:12px; min-width:200px; padding:10px; flex-shrink:0;}
+.kanban-col h5{font-size:12px; color:var(--muted); margin-bottom:10px; display:flex; justify-content:space-between;}
+.kanban-card{background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:9px 10px; font-size:12px; margin-bottom:8px;}
+.kanban-card .lname{font-weight:600; font-size:12.5px; margin-bottom:3px;}
+.kanban-card .lmeta{color:var(--muted2); font-size:10.5px;}
+
+.empty{text-align:center; padding:50px 20px; color:var(--muted);}
+.empty h3{color:var(--text); font-size:15px; margin-bottom:6px;}
+.empty p{font-size:12.5px;}
+
+.section-header{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:14px;}
+.section-header h2{font-size:17px; font-weight:600;}
+.section-header p{font-size:12.5px; color:var(--muted); margin-top:2px;}
+
+.hidden{display:none !important;}
+
+/* ENHANCED SEARCH */
+.search-advanced{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px;margin-top:12px}
+.search-advanced .adv-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px}
+.adv-title{font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.social-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.social-link{font-size:10.5px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;color:var(--text);text-decoration:none;background:var(--bg2)}
+.social-link:hover{border-color:var(--accent);color:var(--accent2)}
+.coverage-pill{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:var(--green);background:rgba(79,206,142,.1);border:1px solid rgba(79,206,142,.25);padding:5px 8px;border-radius:999px}
+@media(max-width:900px){.search-advanced{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- PORTA DE ENTRADA — identifica a sessão pelo e-mail e restaura tudo dessa conta -->
+<div class="overlay show" id="login-gate" style="align-items:center; z-index:100;">
+  <div class="modal" style="max-width:400px; text-align:center;">
+    <div class="brand-mark" style="margin:0 auto 16px auto; width:44px; height:44px; font-size:17px;">AH</div>
+    <h2 style="margin-bottom:6px;">AI Website Hunter</h2>
+    <p class="sub" style="margin-bottom:20px;">Entre com seu e-mail para continuar de onde parou. Seus dados ficam salvos neste navegador, automaticamente.</p>
+    <div class="field" style="text-align:left; margin-bottom:12px;">
+      <label>Seu e-mail</label>
+      <input id="login-email" type="email" placeholder="voce@email.com" style="width:100%;">
+    </div>
+    <div class="field" style="text-align:left; margin-bottom:16px;">
+      <label>Seu nome</label>
+      <input id="login-name" placeholder="Como podemos te chamar?" style="width:100%;">
+    </div>
+    <button class="btn-primary" id="btn-enter-app" style="width:100%; margin-top:0;">Entrar</button>
+    <p style="font-size:11px; color:var(--muted2); margin-top:14px;">Isso não é uma senha nem uma conta segura — é só um identificador local pra separar seus dados de outra pessoa que abra este mesmo arquivo. Login de verdade, com senha e sincronizado entre dispositivos, precisa do backend conectado.</p>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">AH</div>
+      <div>
+        <div class="brand-name">AI Website Hunter</div>
+        <div class="brand-sub">Encontre. Gere. Conquiste.</div>
+      </div>
+    </div>
+    <div class="nav-item active" data-view="dashboard"><span class="nav-icon">◆</span> Dashboard</div>
+    <div class="nav-item" data-view="buscar"><span class="nav-icon">◎</span> Encontrar Empresas</div>
+    <div class="nav-item" data-view="integracoes"><span class="nav-icon">⇄</span> Conectar Plataformas</div>
+    <div class="nav-item" data-view="empresas"><span class="nav-icon">▤</span> Empresas Encontradas</div>
+    <div class="nav-item" data-view="websites"><span class="nav-icon">◫</span> Meus Websites</div>
+    <div class="nav-item" data-view="leads"><span class="nav-icon">◐</span> Leads</div>
+    <div class="nav-item" data-view="uso"><span class="nav-icon">▮</span> Uso da IA</div>
+    <div class="nav-item" data-view="config"><span class="nav-icon">⚙</span> Configurações</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="view" id="view-dashboard">
+      <div class="topbar">
+        <div>
+          <h1>Olá, Fred</h1>
+          <div class="hello">Aqui está o panorama da sua prospecção</div>
+        </div>
+        <div class="demo-pill">MODO DEMONSTRAÇÃO</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Empresas encontradas</div><div class="stat-value" id="stat-companies">0</div><div class="stat-delta">fontes públicas</div></div>
+        <div class="stat-card"><div class="stat-label">Websites gerados</div><div class="stat-value" id="stat-sites">0</div><div class="stat-delta">este mês</div></div>
+        <div class="stat-card"><div class="stat-label">Leads qualificados</div><div class="stat-value" id="stat-leads">0</div><div class="stat-delta">em negociação: <span id="stat-neg">0</span></div></div>
+        <div class="stat-card"><div class="stat-label">Projetos em andamento</div><div class="stat-value" id="stat-projects">0</div><div class="stat-delta">rascunho + gerando</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Potencial de clientes encontrados (últimos 7 dias)</div>
+        <div class="chart" id="chart"></div>
+        <div class="chart-labels"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+      </div>
+    </div>
+
+    <!-- CONECTAR PLATAFORMAS -->
+    <div class="view hidden" id="view-integracoes">
+      <div class="section-header">
+        <div><h2>Conectar plataformas</h2><p>Autorize suas contas para descobrir empresas com dados reais. Apenas APIs oficiais e OAuth — sem scraping, sem burlar login.</p></div>
+        <button class="btn-secondary" id="btn-assistente">Assistente de integração</button>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px; background:rgba(227,179,97,.06); border-color:rgba(227,179,97,.3);">
+        <div class="analysis-text" style="color:var(--gold); font-size:12.5px;">
+          ⚠ <strong>Sobre este ambiente:</strong> como esta é uma demonstração estática (sem backend), os botões abaixo <em>simulam</em> o fluxo oficial de OAuth para você visualizar a experiência completa. Nenhum login real acontece e nenhum token é criado. Em produção, cada botão abriria a tela de login oficial da própria plataforma (Meta, Google, WhatsApp), e o backend armazenaria o token com segurança — nunca visível ao usuário.
+        </div>
+      </div>
+
+      <div class="company-grid" id="integration-cards"></div>
+    </div>
+
+    <!-- OAuth simulation modal -->
+    <div class="overlay" id="oauth-overlay">
+      <div class="modal" style="max-width:380px; text-align:center;">
+        <div id="oauth-body">
+          <div style="font-size:28px; margin-bottom:10px;" id="oauth-icon">🔒</div>
+          <h2 id="oauth-title" style="margin-bottom:8px;">Redirecionando...</h2>
+          <p class="sub" id="oauth-sub">Abrindo o login oficial</p>
+          <div class="progress-track"><div class="progress-fill" id="oauth-progress" style="width:0%;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUSCAR -->
+    <div class="view hidden" id="view-buscar">
+      <div class="section-header">
+        <div><h2>Encontrar empresas</h2><p>Defina os filtros e deixe a IA localizar oportunidades em fontes públicas</p></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="field"><label>O que você está procurando?</label>
+          <div style="display:flex; gap:8px;">
+            <input id="nl-search" placeholder="Ex: Restaurantes italianos em Miami" style="flex:1;">
+            <button class="btn-secondary" id="btn-nl-parse">Interpretar</button>
+          </div>
+        </div>
+        <div id="nl-confirm" class="hidden" style="margin-top:12px; padding:12px; background:var(--bg2); border-radius:9px; border:1px solid var(--line);">
+          <div style="font-size:12.5px; color:var(--text); margin-bottom:8px;">Entendi sua busca: <strong id="nl-summary"></strong>. Confirmar pesquisa?</div>
+          <button class="btn-primary" id="btn-nl-confirm" style="margin-top:0; padding:9px 18px;">PESQUISAR</button>
+          <button class="btn-ghost" id="btn-nl-cancel">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="search-advanced">
+          <div class="adv-card"><div class="adv-title">Cobertura</div><label style="font-size:12px;color:var(--text);"><input type="checkbox" id="f-todas-cidades" checked> Pesquisar em todas as cidades quando cidade estiver vazia</label></div>
+          <div class="adv-card"><div class="adv-title">Qualificação</div><label style="font-size:12px;color:var(--text);"><input type="checkbox" id="f-enriquecer-sociais" checked> Enriquecer Instagram/Facebook/WhatsApp</label></div>
+          <div class="adv-card"><div class="adv-title">Busca</div><label style="font-size:12px;color:var(--text);"><input type="checkbox" id="f-remover-duplicados" checked> Remover duplicados e ranquear oportunidades</label></div>
+        </div>
+        <div class="field" style="margin:14px 0;"><label>Fontes de busca</label>
+          <div class="chip-group" id="chip-fontes">
+            <div class="chip selected" data-val="Google Maps">Google Maps <span style="color:var(--green); font-size:9.5px;">● ativo</span></div>
+            <div class="chip" data-val="Instagram" data-locked="1">Instagram <span style="color:var(--gold); font-size:9.5px;">● requer integração</span></div>
+            <div class="chip" data-val="Facebook" data-locked="1">Facebook <span style="color:var(--gold); font-size:9.5px;">● requer integração</span></div>
+            <div class="chip" data-val="LinkedIn" data-locked="1">LinkedIn <span style="color:var(--gold); font-size:9.5px;">● requer integração</span></div>
+          </div>
+        </div>
+        <div class="filters-form">
+          <div class="field"><label>País</label>
+            <select id="f-pais"><option>Brasil</option><option>Estados Unidos</option><option>Portugal</option><option>Espanha</option><option>Reino Unido</option><option>França</option><option>Alemanha</option><option>Canadá</option><option>Austrália</option><option>Todos</option></select>
+          </div>
+          <div class="field"><label>Cidade / região</label>
+            <input id="f-cidade" list="cidades-cobertura" placeholder="Ex: Belo Horizonte (deixe em branco para todas)">
+            <datalist id="cidades-cobertura">
+              <option value="São Paulo">
+              <option value="Rio de Janeiro">
+              <option value="Belo Horizonte">
+              <option value="Curitiba">
+              <option value="Porto Alegre">
+              <option value="Fortaleza">
+              <option value="Recife">
+              <option value="Salvador">
+              <option value="Brasília">
+              <option value="Manaus">
+              <option value="Goiânia">
+              <option value="Florianópolis">
+              <option value="Campinas">
+              <option value="Belém">
+              <option value="Vitória">
+              <option value="Natal">
+              <option value="Maceió">
+              <option value="João Pessoa">
+            </datalist>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+  <span class="coverage-pill">● Cobertura: todos os municípios do Brasil</span>
+  <button type="button" class="btn-ghost" id="btn-load-cities" style="padding:0;">Atualizar lista de cidades</button>
+</div>
+          </div>
+          <div class="field"><label>Nicho</label>
+            <select id="f-nicho"><option>Todos os tipos de empresa</option><option>Restaurantes</option><option>Pizzarias</option><option>Hamburguerias</option><option>Cafeterias</option><option>Padarias</option><option>Lanchonetes</option><option>Bares</option><option>Docerias</option><option>Sorveterias</option><option>Buffets</option><option>Food trucks</option><option>Barbearias</option><option>Salões de beleza</option><option>Estúdios de unhas</option><option>Clínicas</option><option>Dentistas</option><option>Laboratórios</option><option>Fisioterapia</option><option>Psicologia</option><option>Veterinários</option><option>Pet shops</option><option>Farmácias</option><option>Academias</option><option>Crossfit</option><option>Escolas</option><option>Cursos</option><option>Creches</option><option>Hotéis</option><option>Pousadas</option><option>Hostels</option><option>Agências de turismo</option><option>Imobiliárias</option><option>Construtoras</option><option>Arquitetura</option><option>Engenharia</option><option>Escritórios</option><option>Escritórios de contabilidade</option><option>Advocacia</option><option>Consultoria</option><option>Seguros</option><option>Bancos/serviços financeiros</option><option>Empresas de tecnologia</option><option>Tecnologia</option><option>Software</option><option>Agências de marketing</option><option>Agências de publicidade</option><option>Fotógrafos</option><option>Videomakers</option><option>Gráficas</option><option>Lojas</option><option>Lojas de roupas</option><option>Lojas de calçados</option><option>Lojas de móveis</option><option>Lojas de decoração</option><option>Lojas de eletrônicos</option><option>Lojas de celulares</option><option>Supermercados</option><option>Mercados</option><option>Autopeças</option><option>Mecânicas</option><option>Funilaria e pintura</option><option>Auto elétrico</option><option>Lava-jato</option><option>Locadoras de veículos</option><option>Transportadoras</option><option>Logística</option><option>Pet care</option><option>Floriculturas</option><option>Joalherias</option><option>Óticas</option><option>Lojas de presentes</option><option>Materiais de construção</option><option>Marcenarias</option><option>Serralherias</option><option>Empresas de limpeza</option><option>Dedetizadoras</option><option>Segurança eletrônica</option><option>Energia solar</option><option>Instalação elétrica</option><option>Encanadores</option><option>Pintores</option><option>Reformas</option><option>Manutenção</option><option>Profissionais autônomos</option><option>Outros</option></select>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:14px;"><label>Tamanho da empresa <span style="color:var(--muted2); font-weight:400;">(opcional — nenhum selecionado = todas)</span></label>
+          <div class="chip-group" id="chip-tamanho">
+            <div class="chip" data-val="Pequena">Pequena</div>
+            <div class="chip" data-val="Média">Média</div>
+            <div class="chip" data-val="Grande">Grande</div>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:14px;"><label>Presença digital <span style="color:var(--muted2); font-weight:400;">(opcional — nenhum selecionado = todas)</span></label>
+          <div class="chip-group" id="chip-presenca">
+            <div class="chip" data-val="Sem website">Sem website</div>
+            <div class="chip" data-val="Website desatualizado">Website desatualizado</div>
+            <div class="chip" data-val="Website incompleto">Website incompleto</div>
+            <div class="chip" data-val="Website com baixa qualidade">Website com baixa qualidade</div>
+            <div class="chip" data-val="Website existente">Website existente</div>
+          </div>
+        </div>
+        <div class="field" style="max-width:180px; margin-bottom:14px;"><label>Quantidade de empresas</label>
+          <select id="f-qtd"><option>10</option><option selected>25</option><option>50</option><option>100</option></select>
+        </div>
+        <button class="btn-primary" id="btn-buscar">INICIAR BUSCA COM IA</button>
+
+        <div class="loading-box" id="loading-box">
+          <div class="loading-step" id="loading-step">Procurando empresas...</div>
+          <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPRESAS ENCONTRADAS -->
+    <div class="view hidden" id="view-empresas">
+      <div class="section-header">
+        <div><h2>Empresas encontradas</h2><p id="empresas-sub">Nenhuma busca realizada ainda</p></div>
+        <button class="btn-secondary" data-view="buscar">Nova busca</button>
+      </div>
+
+      <div class="stat-grid" id="results-stats" style="margin-bottom:14px;">
+        <div class="stat-card"><div class="stat-label">Oportunidade média</div><div class="stat-value" id="rs-avg-score" style="font-size:22px;">—</div></div>
+        <div class="stat-card"><div class="stat-label">Relevância média</div><div class="stat-value" id="rs-avg-relevance" style="font-size:22px;">—</div></div>
+        <div class="stat-card"><div class="stat-label">Com telefone</div><div class="stat-value" id="rs-with-phone" style="font-size:22px;">—</div></div>
+        <div class="stat-card"><div class="stat-label">Sem website</div><div class="stat-value" id="rs-no-website" style="font-size:22px;">—</div></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="filters-form" style="grid-template-columns:1fr 1fr 1fr; margin-bottom:0;">
+          <div class="field"><label>Ordenar por</label>
+            <select id="rs-sort">
+              <option value="relevance">Relevância</option>
+              <option value="score">Oportunidade</option>
+              <option value="rating">Avaliação (Google)</option>
+              <option value="name">Nome (A-Z)</option>
+            </select>
+          </div>
+          <div class="field"><label>Mostrar</label>
+            <select id="rs-filter">
+              <option value="all">Todas</option>
+              <option value="no-website">Só sem website</option>
+              <option value="with-phone">Só com telefone</option>
+              <option value="high-opportunity">Só oportunidade alta+ (61+)</option>
+            </select>
+          </div>
+          <div class="field"><label>&nbsp;</label><button class="btn-secondary" id="rs-apply" style="width:100%;">Aplicar</button></div>
+        </div>
+      </div>
+
+      <div id="empresas-empty" class="empty">
+        <h3>Nenhuma empresa por aqui ainda</h3>
+        <p>Vá em "Encontrar Empresas" e inicie uma busca para ver resultados aparecerem aqui.</p>
+      </div>
+      <div class="company-grid" id="company-grid"></div>
+    </div>
+
+    <!-- MEUS WEBSITES -->
+    <div class="view hidden" id="view-websites">
+      <div class="section-header"><div><h2>Meus websites</h2><p>Projetos gerados pela IA a partir das empresas analisadas</p></div></div>
+      <div id="websites-empty" class="empty">
+        <h3>Nenhum website gerado ainda</h3>
+        <p>Analise uma empresa e clique em "Gerar Site" para criar seu primeiro projeto.</p>
+      </div>
+      <div class="company-grid" id="websites-grid"></div>
+    </div>
+
+    <!-- LEADS -->
+    <div class="view hidden" id="view-leads">
+      <div class="section-header"><div><h2>Leads</h2><p>Acompanhe o funil de contato com as empresas encontradas</p></div></div>
+      <div class="kanban" id="kanban"></div>
+    </div>
+
+    <!-- USO DA IA -->
+    <div class="view hidden" id="view-uso">
+      <div class="section-header"><div><h2>Uso da IA</h2><p>Consumo de tokens e limites do seu plano</p></div></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Plano atual</div><div class="stat-value" style="font-size:18px;">FREE</div><div class="stat-delta" style="color:var(--muted);">estrutura preparada p/ upgrade</div></div>
+        <div class="stat-card"><div class="stat-label">Análises usadas</div><div class="stat-value" id="uso-analises">0/20</div></div>
+        <div class="stat-card"><div class="stat-label">Sites gerados</div><div class="stat-value" id="uso-sites">0/5</div></div>
+        <div class="stat-card"><div class="stat-label">Tokens (estimado)</div><div class="stat-value" id="uso-tokens">0</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Planos disponíveis (estrutura, sem cobrança ativa)</div>
+        <div class="company-grid">
+          <div class="company-card"><div class="company-name">FREE</div><div class="company-meta">20 análises · 5 sites · 25 empresas/busca</div></div>
+          <div class="company-card"><div class="company-name">STARTER</div><div class="company-meta">100 análises · 25 sites · 50 empresas/busca</div></div>
+          <div class="company-card"><div class="company-name">PRO</div><div class="company-meta">500 análises · 100 sites · 100 empresas/busca</div></div>
+          <div class="company-card"><div class="company-name">AGENCY</div><div class="company-meta">Ilimitado · múltiplos usuários · export prioritário</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="view hidden" id="view-config">
+      <div class="section-header"><div><h2>Configurações</h2><p>Integrações e chaves de API (backend)</p></div></div>
+
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">Meu perfil</div>
+        <div class="analysis-text" style="color:var(--muted); font-size:12.5px; margin-bottom:12px;">
+          Isso identifica você neste navegador (personaliza o "Olá" do painel) — <strong>não é um login seguro</strong>: não tem senha, não sincroniza entre dispositivos, e qualquer pessoa que abrir este arquivo no seu computador vê os mesmos dados. Login de verdade (com senha e sincronizado) precisa do backend conectado — veja a nota abaixo.
+        </div>
+        <div class="filters-form" style="grid-template-columns:1fr 1fr;">
+          <div class="field"><label>Nome</label><input id="profile-name" placeholder="Seu nome"></div>
+          <div class="field"><label>E-mail (opcional)</label><input id="profile-email" placeholder="voce@email.com"></div>
+        </div>
+        <button class="btn-secondary" id="btn-save-profile" style="margin-top:10px;">Salvar perfil</button>
+        <button class="btn-secondary" id="btn-logout" style="margin-top:10px; margin-left:8px;">Sair / trocar de e-mail</button>
+      </div>
+
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">Dados salvos neste navegador</div>
+        <div class="analysis-text" style="color:var(--muted); font-size:12.5px; margin-bottom:12px;">
+          Empresas buscadas, sites gerados e leads ficam salvos automaticamente <strong>neste navegador</strong> (localStorage) — continuam aqui mesmo se você fechar a aba ou desligar o computador. Não ficam salvos na nuvem nem sincronizam com outro dispositivo/navegador — para isso, é preciso o backend com banco de dados real (Supabase), como já estava no plano original.
+        </div>
+        <button class="btn-secondary" id="btn-clear-data" style="color:var(--red); border-color:var(--red);">🗑 Limpar todos os dados salvos</button>
+      </div>
+
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">Modo real (backend)</div>
+        <div class="analysis-text" style="color:var(--muted); font-size:12.5px; margin-bottom:12px;">
+          Informe a URL do backend publicado (veja o pacote <code>business-discovery-server</code> que te entreguei — usa a Local Business Data API, gratuita e sem cartão). Com isso conectado, a busca de empresas passa a usar dados 100% reais do Google Maps (nome, telefone, endereço, avaliação e fotos) para qualquer cidade e nicho. Os textos do site continuam gerados no modo simulado, a menos que você também configure uma chave de IA paga — sem isso, tudo funciona igual, só o texto não é gerado por IA.
+        </div>
+        <div class="filters-form" style="grid-template-columns:2fr 1fr;">
+          <div class="field"><label>URL do backend</label><input id="backend-url" placeholder="https://seu-backend.onrender.com" value="https://meu-banked.onrender.com"></div>
+          <div class="field"><label>&nbsp;</label><button class="btn-secondary" id="btn-test-backend" style="width:100%;">Testar conexão</button></div>
+        </div>
+        <div id="backend-status" style="font-size:12.5px; margin-top:8px; color:var(--muted);">○ Nenhum backend conectado — o app está em modo demonstração.</div>
+      </div>
+
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">Integrações</div>
+        <div class="company-grid">
+          <div class="company-card"><div class="company-name">Google Maps / Places</div><div class="company-meta">Empresas, endereço, telefone, avaliações públicas. Já usado nesta demo (8 combinações cidade/nicho).</div><span class="badge" style="align-self:flex-start; color:var(--green); border-color:var(--green);">Ativo (dados reais)</span></div>
+          <div class="company-card"><div class="company-name">Instagram</div><div class="company-meta">Requer Meta Graph API + conta comercial autorizada. Não é possível buscar qualquer perfil livremente — só dados de contas que autorizaram o app.</div><span class="badge" style="align-self:flex-start;">Não conectado</span></div>
+          <div class="company-card"><div class="company-name">Facebook</div><div class="company-meta">Mesma restrição do Instagram — Meta Graph API com permissão de negócio.</div><span class="badge" style="align-self:flex-start;">Não conectado</span></div>
+          <div class="company-card"><div class="company-name">LinkedIn</div><div class="company-meta">Requer LinkedIn Marketing/Sales Navigator API com parceria aprovada.</div><span class="badge" style="align-self:flex-start;">Não conectado</span></div>
+          <div class="company-card"><div class="company-name">OpenAI</div><div class="company-meta">Chave configurada via variável de ambiente no backend. Nunca exposta no frontend.</div><span class="badge" style="align-self:flex-start;">Não conectado (demo)</span></div>
+          <div class="company-card"><div class="company-name">Supabase</div><div class="company-meta">Banco de dados: users, companies, leads, projects, ai_usage...</div><span class="badge" style="align-self:flex-start;">Não conectado (demo)</span></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:14px; background:rgba(108,99,245,.06);">
+        <div class="panel-title">Imagens dos sites — Pexels</div>
+        <div class="analysis-text" style="color:var(--muted);font-size:12.5px;">A geração de websites usa o endpoint seguro <code>/api/images/search</code> para buscar fotos relacionadas ao nicho, cidade e serviços. A chave Pexels deve ficar somente no backend, nunca no HTML.</div>
+        <div style="margin-top:10px;"><span class="badge" style="color:var(--accent2);border-color:var(--accent);">Pexels · busca automática · crédito exibido no site</span></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">Cobertura de dados reais pré-coletados (modo demo)</div>
+        <div class="analysis-text" style="color:var(--muted); font-size:12.5px;">
+          <strong style="color:var(--text);">Todas as 27 capitais do Brasil têm pelo menos Restaurantes com dados reais.</strong> <strong>São Paulo</strong> tem 23 tipos de negócio diferentes. <strong>Rio de Janeiro</strong> e <strong>Belo Horizonte</strong> têm 5 tipos cada. As demais capitais (Salvador, Brasília, Manaus, Goiânia, Florianópolis, Belém, Vitória, Natal, Maceió, João Pessoa, Aracaju, Cuiabá, Campo Grande, São Luís, Teresina, Porto Velho, Rio Branco, Macapá, Boa Vista, Palmas, Curitiba, Porto Alegre, Fortaleza, Recife, Campinas) têm pelo menos 1 nicho carregado com dado real. O campo de cidade sugere qualquer município do Brasil (via IBGE) — fora das combinações listadas, sem o backend real conectado, a busca não retorna resultado (em vez de inventar empresas).
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Sobre o modo demonstração</div>
+        <div class="analysis-text" style="color:var(--muted);">Este ambiente roda com dados públicos pré-coletados (marcados DADOS REAIS) e, fora dessas combinações, não preenche resultados — para validar o fluxo completo (busca, oportunidade, análise, geração de site e leads) sem consumir API real. Conecte o backend acima para busca 100% real e ilimitada.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ANALYSIS MODAL -->
+<div class="overlay" id="analysis-overlay">
+  <div class="modal">
+    <button class="modal-close" id="close-analysis">✕</button>
+    <h2 id="an-title">Análise da empresa</h2>
+    <div class="sub" id="an-sub"></div>
+    <div id="an-body"></div>
+    <button class="btn-primary" id="btn-gerar-do-modal" style="width:100%;">GERAR WEBSITE COM IA</button>
+  </div>
+</div>
+
+<!-- CONTACT PREP MODAL -->
+<div class="overlay" id="contact-overlay">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-close" id="close-contact">✕</button>
+    <h2 id="contact-title">Preparar contato</h2>
+    <div class="sub" id="contact-sub"></div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>Mensagem sugerida (edite à vontade)</label>
+      <textarea id="contact-message" rows="7" style="width:100%; background:var(--bg2); border:1px solid var(--line); color:var(--text); padding:10px; border-radius:9px; font-size:13px; font-family:inherit;"></textarea>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a id="contact-whatsapp" href="#" target="_blank" style="text-decoration:none;"><button class="btn-primary" style="margin-top:0; background:linear-gradient(135deg,#25D366,#1DA851);">💬 Abrir no WhatsApp</button></a>
+      <button class="btn-secondary" id="contact-copy">Copiar mensagem</button>
+      <a id="contact-call" href="#" style="text-decoration:none;"><button class="btn-secondary">📞 Ligar</button></a>
+    </div>
+    <div class="analysis-text" style="color:var(--muted); font-size:11.5px; margin-top:14px;">
+      Você revisa e envia — nada é disparado automaticamente. O WhatsApp abre com a mensagem pronta, no seu próprio número, através do link oficial wa.me (não requer login de app nenhum). Isso é mensagem manual assistida por IA, não um bot de disparo automático.
+    </div>
+  </div>
+</div>
+
+<!-- SITE MODAL -->
+<div class="overlay" id="site-overlay">
+  <div class="modal" style="max-width:900px;">
+    <button class="modal-close" id="close-site">✕</button>
+    <h2 id="site-title">Website gerado</h2>
+    <div class="sub">Clique em qualquer texto para editar (prévia local)</div>
+    <div class="loading-box show" id="site-loading">
+      <div class="loading-step" id="site-loading-step">Analisando empresa...</div>
+      <div class="progress-track"><div class="progress-fill" id="site-progress"></div></div>
+    </div>
+    <div id="site-preview-wrap" class="hidden">
+      <div class="site-mode-toggle">
+        <button type="button" class="site-mode-btn" id="mode-edit-btn" onclick="setSiteMode(true)">✏️ Modo edição</button>
+        <button type="button" class="site-mode-btn" id="mode-final-btn" onclick="setSiteMode(false)">✓ Modo final (pra mostrar ao cliente)</button>
+      </div>
+      <div class="analysis-text" style="color:var(--muted); font-size:11.5px; margin-top:6px; margin-bottom:4px;" id="site-mode-hint">💡 Clique em qualquer texto pra editar. Passe o mouse sobre uma imagem pra trocar por outra ou enviar a sua própria foto.</div>
+      <div class="site-shell" id="site-shell"></div>
+      <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn-secondary" id="btn-add-lead">Adicionar aos leads</button>
+        <button class="btn-secondary" id="btn-proposta">Gerar proposta</button>
+        <button class="btn-secondary" id="btn-download-site" style="color:var(--green); border-color:var(--green);">⬇️ Baixar site (HTML)</button>
+        <button class="btn-primary" style="margin-top:0;" id="btn-publicar">Publicar (demo)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------------- DATA ----------------
+const NICHE_PROFILES = {
+  "Restaurantes": {palette:["#2B1B12","#C87F3B","#F2E4D0"], style:"Aconchegante e apetitoso", services:["Cardápio online","Reservas","Delivery"], team:false},
+  "Barbearias": {palette:["#161616","#D4AF37","#FFFFFF"], style:"Urbano e clássico", services:["Corte masculino","Barba","Sobrancelha"], team:true},
+  "Salões de beleza": {palette:["#2E1A26","#E88FB0","#FFF7FA"], style:"Elegante e delicado", services:["Coloração","Corte","Tratamentos"], team:true},
+  "Clínicas": {palette:["#0E2A38","#2FA3A3","#F2F9FA"], style:"Confiável e clínico", services:["Consultas","Exames","Retorno online"], team:true},
+  "Academias": {palette:["#111318","#FF5A3C","#FFFFFF"], style:"Energético e forte", services:["Musculação","Aulas coletivas","Consultoria"], team:true},
+  "Lojas": {palette:["#1A1A2E","#F2C14E","#FFFFFF"], style:"Comercial e direto", services:["Catálogo","Promoções","Retirada na loja"], team:false},
+  "Imobiliárias": {palette:["#12202B","#3E7C8C","#F5F7F8"], style:"Sóbrio e confiável", services:["Venda","Locação","Avaliação de imóveis"], team:true},
+  "Escritórios": {palette:["#101820","#4C6E91","#F4F6F8"], style:"Corporativo e sóbrio", services:["Consultoria","Assessoria","Atendimento sob demanda"], team:true},
+  "Hotéis": {palette:["#1B1730","#B08D57","#FAF7F0"], style:"Sofisticado e acolhedor", services:["Reservas","Diárias","Pacotes"], team:false},
+  "Dentistas": {palette:["#0E2233","#4FB6C4","#F5FBFC"], style:"Clínico e leve", services:["Avaliação","Ortodontia","Clareamento"], team:true},
+  "Fotógrafos": {palette:["#141414","#E0E0E0","#FF6B6B"], style:"Visual e minimalista", services:["Ensaios","Casamentos","Eventos"], team:false},
+  "Mecânicas": {palette:["#161616","#E0532C","#EDEDED"], style:"Robusto e técnico", services:["Revisão","Funilaria","Diagnóstico"], team:true},
+  "Empresas de tecnologia": {palette:["#0B0E17","#6C63F5","#F1F2FF"], style:"Moderno e tecnológico", services:["Consultoria","Desenvolvimento","Suporte"], team:true},
+  "Profissionais autônomos": {palette:["#161821","#8B84FF","#F4F4F8"], style:"Pessoal e direto", services:["Atendimento","Orçamento","Portfólio"], team:false},
+  "Outros": {palette:["#14161E","#6C63F5","#F0F0F5"], style:"Neutro e profissional", services:["Serviço 1","Serviço 2","Serviço 3"], team:false}
+};
+const NAME_PARTS = ["Bela","Sabor","Vida","Nova","Prime","Central","União","Real","Vitória","Boa","Alta","Sul","Norte","Ponto","Casa"];
+const NAME_SUFFIX = ["& Cia","Ltda","Serviços","Studio","Express","Center","Group","House"];
+
+let allCompanies = [];
+let projects = [];
+let leads = [];
+
+// ---------------- PERSISTÊNCIA LOCAL POR CONTA (cada e-mail tem seus próprios dados salvos) ----------------
+const LAST_EMAIL_KEY = 'aiwh-last-email';
+let currentEmail = null;
+let currentView = 'dashboard';
+
+function dataKeyFor(email){ return 'aiwh-data:' + email.toLowerCase().trim(); }
+
+function saveState(){
+  if(!currentEmail) return; // ninguém logado ainda — nada a salvar
+  try{
+    localStorage.setItem(dataKeyFor(currentEmail), JSON.stringify({
+      allCompanies, projects, leads, profile: userProfile, currentView
+    }));
+  }catch(e){ console.warn('Não foi possível salvar localmente:', e); }
+}
+function loadState(email){
+  try{
+    const raw = localStorage.getItem(dataKeyFor(email));
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    if(Array.isArray(data.allCompanies)) allCompanies = data.allCompanies;
+    if(Array.isArray(data.projects)) projects = data.projects;
+    if(Array.isArray(data.leads)) leads = data.leads;
+    if(data.profile) userProfile = data.profile;
+    return data;
+  }catch(e){ console.warn('Não foi possível carregar dados salvos:', e); return null; }
+}
+let currentAnalyzing = null;
+
+// ---------------- DADOS REAIS (via Google Places) ----------------
+// Coletados uma vez a partir de fontes públicas (Google Places) para esta demo.
+// Cobre 8 combinações cidade+nicho. Fora dessas, a busca cai para simulação (DEMO).
+const REAL_COMPANIES_RAW = [
+  {name:"CB Construções", city:"Salvador", niche:"Construtoras", rating:4.8, ratingCount:96, phone:"+55 71 3354-1128", address:"R. Prof. Leopoldo Amaral, 366 - Sala 903, Pituba, Salvador - BA"},
+  {name:"Fratta Construtora e Incorporadora", city:"São Paulo", niche:"Construtoras", rating:4.7, ratingCount:211, phone:"+55 11 4902-1888", address:"Av. Paulista, 1337 - Bela Vista, São Paulo - SP"},
+  {name:"MAC Construtora e Incorporadora", city:"São Paulo", niche:"Construtoras", rating:4.2, ratingCount:172, phone:"+55 11 3817-0080", address:"Av. Brig. Faria Lima, 2066 - Jardim Paulistano, São Paulo - SP"},
+  {name:"Construction Fonseca & Mercadante", city:"São Paulo", niche:"Construtoras", rating:5.0, ratingCount:21, phone:"+55 11 3092-1280", address:"R. Dr. Fernandes Coelho, 64 - Pinheiros, São Paulo - SP"},
+  {name:"AMACna Construtora", city:"São Paulo", niche:"Construtoras", rating:4.8, ratingCount:31, phone:"+55 11 5041-9110", address:"R. Vieira de Morais, 420 - Brooklin, São Paulo - SP"},
+  {name:"Carvalho Construtora & Reformas", city:"Rio de Janeiro", niche:"Construtoras", rating:5.0, ratingCount:51, phone:"+55 21 97971-1226", address:"Estr. dos Três Rios, 958 - Freguesia, Rio de Janeiro - RJ"},
+  {name:"Teckla Construtora e Incorporadora", city:"Rio de Janeiro", niche:"Construtoras", rating:4.9, ratingCount:33, phone:"+55 21 98021-1000", address:"Av. das Américas, 4200 - Barra da Tijuca, Rio de Janeiro - RJ"},
+  {name:"Construtora Fontanive", city:"Curitiba", niche:"Construtoras", rating:4.8, ratingCount:796, phone:"+55 41 3262-1010", address:"R. Jorn. Octávio Secundino, 384 - Bom Retiro, Curitiba - PR"},
+  {name:"Construtora Laguna", city:"Curitiba", niche:"Construtoras", rating:4.5, ratingCount:132, phone:"+55 41 3259-1800", address:"Av. Iguaçu, 2820 - Água Verde, Curitiba - PR"},
+  {name:"CGL Construtora e Incorporadora", city:"Curitiba", niche:"Construtoras", rating:4.6, ratingCount:132, phone:"+55 41 3335-8292", address:"Av. Cândido Hartmann, 4137 - Santo Inácio, Curitiba - PR"},
+  {name:"Le Bife", city:"São Paulo", niche:"Restaurantes", rating:4.6, ratingCount:5396, phone:"+55 11 4324-0783", address:"R. Pedroso Alvarenga, 1088 - Itaim Bibi, São Paulo - SP"},
+  {name:"Terraço Jardins", city:"São Paulo", niche:"Restaurantes", rating:4.6, ratingCount:908, phone:"+55 11 97607-6586", address:"Alameda Santos, 2233 - Jardim Paulista, São Paulo - SP"},
+  {name:"Djapa Moema | Restaurante Japonês", city:"São Paulo", niche:"Restaurantes", rating:4.7, ratingCount:12967, phone:"+55 11 2691-2003", address:"R. Gaivota, 168 - Moema, São Paulo - SP"},
+  {name:"Adega Santiago Asador", city:"São Paulo", niche:"Restaurantes", rating:4.7, ratingCount:393, phone:"+55 11 3198-8258", address:"Rua Haddock Lobo, 1626 - Cerqueira César, São Paulo - SP"},
+  {name:"Zucco Ristorante", city:"São Paulo", niche:"Restaurantes", rating:4.8, ratingCount:5014, phone:"+55 11 3897-0666", address:"Rua Haddock Lobo, 1416 - Cerqueira César, São Paulo - SP"},
+  {name:"Altruísta Osteria e Enoteca", city:"São Paulo", niche:"Restaurantes", rating:4.9, ratingCount:5666, phone:"+55 11 3142-9962", address:"Alameda Campinas, 952 - Jardins, São Paulo - SP"},
+  {name:"Refugio", city:"São Paulo", niche:"Restaurantes", rating:4.9, ratingCount:293, phone:"+55 11 94796-3378", address:"Alameda Franca, 1225 - Jardim Paulista, São Paulo - SP"},
+  {name:"Casaría SP", city:"São Paulo", niche:"Restaurantes", rating:4.5, ratingCount:3931, phone:"+55 11 3068-0778", address:"Alameda Franca, 1243 - Jardim Paulista, São Paulo - SP"},
+  {name:"Tanit", city:"São Paulo", niche:"Restaurantes", rating:4.7, ratingCount:1606, phone:"+55 11 3062-6385", address:"R. Oscar Freire, 145 - Cerqueira César, São Paulo - SP"},
+  {name:"Miró Gastronomia", city:"São Paulo", niche:"Restaurantes", rating:4.7, ratingCount:898, phone:"+55 11 4780-9802", address:"Alameda Lorena, 2101 - Jardim Paulista, São Paulo - SP"},
+  {name:"Jam Jardins Japanese Cusine", city:"São Paulo", niche:"Restaurantes", rating:4.7, ratingCount:2595, phone:"+55 11 3473-3273", address:"R. Bela Cintra, 1929 - Cerqueira César, São Paulo - SP"},
+  {name:"Bistrot de Paris", city:"São Paulo", niche:"Restaurantes", rating:4.6, ratingCount:2116, phone:"+55 11 3063-1675", address:"R. Augusta, 2542 - Jardins, São Paulo - SP"},
+  {name:"A Figueira Rubaiyat", city:"São Paulo", niche:"Restaurantes", rating:4.6, ratingCount:10932, phone:"+55 11 3087-1399", address:"Rua Haddock Lobo, 1738 - Cerqueira César, São Paulo - SP"},
+  {name:"Pé de Manga", city:"São Paulo", niche:"Restaurantes", rating:4.2, ratingCount:7348, phone:"+55 11 3815-6461", address:"R. Arapiraca, 152 - Vila Madalena, São Paulo - SP"},
+  {name:"Olívio Bar & Gastronomy", city:"São Paulo", niche:"Restaurantes", rating:4.6, ratingCount:4634, phone:"+55 11 4680-2967", address:"R. Delfina, 196 - Vila Madalena, São Paulo - SP"},
+  {name:"Bosco Restaurante", city:"São Paulo", niche:"Restaurantes", rating:4.5, ratingCount:1843, phone:"+55 11 93422-9554", address:"R. João Moura, 976 - Pinheiros, São Paulo - SP"},
+  {name:"Boteco São Bento Vila Madalena", city:"São Paulo", niche:"Restaurantes", rating:4.4, ratingCount:5087, phone:"+55 11 3167-7774", address:"R. Mourato Coelho, 1060 - Vila Madalena, São Paulo - SP"},
+  {name:"O Pasquim Bar e Prosa", city:"São Paulo", niche:"Restaurantes", rating:4.5, ratingCount:8666, phone:"+55 11 99919-7767", address:"R. Aspicuelta, 524 - Vila Madalena, São Paulo - SP"},
+  {name:"Banana Verde Restaurant", city:"São Paulo", niche:"Restaurantes", rating:4.5, ratingCount:2919, phone:"+55 11 3814-4828", address:"Rua Harmonia, 278 - Vila Madalena, São Paulo - SP"},
+  {name:"Martín Fierro", city:"São Paulo", niche:"Restaurantes", rating:4.5, ratingCount:1422, phone:"+55 11 3814-6747", address:"R. Aspicuelta, 683 - Vila Madalena, São Paulo - SP"},
+  {name:"Malibu Park - Vila Madalena", city:"São Paulo", niche:"Restaurantes", rating:4.5, ratingCount:328, phone:"+55 11 3097-9904", address:"R. Fidalga, 429 - Vila Madalena, São Paulo - SP"},
+  {name:"O Escandinavo", city:"São Paulo", niche:"Restaurantes", rating:4.8, ratingCount:745, phone:"+55 11 95144-4486", address:"R. Mourato Coelho, 1365 - Pinheiros, São Paulo - SP"},
+  {name:"Pasquale Cantina", city:"São Paulo", niche:"Restaurantes", rating:4.5, ratingCount:1177, phone:"+55 11 3081-0333", address:"R. Girassol, 66 - Vila Madalena, São Paulo - SP"},
+  {name:"La Braciera Pizzaria", city:"São Paulo", niche:"Pizzarias", rating:4.8, ratingCount:8976, phone:"+55 11 94114-1120", address:"Alameda Lorena, 1040 - Cerqueira César, São Paulo - SP"},
+  {name:"Veridiana Pizzaria", city:"São Paulo", niche:"Pizzarias", rating:4.6, ratingCount:7301, phone:"+55 11 3801-9000", address:"R. José Maria Lisboa, 493 - Jardim Paulista, São Paulo - SP"},
+  {name:"Margherita Pizzeria", city:"São Paulo", niche:"Pizzarias", rating:4.7, ratingCount:8635, phone:"+55 11 2714-3000", address:"Alameda Tietê, 255 - Jardins, São Paulo - SP"},
+  {name:"Vila da Pizza - Bixiga", city:"São Paulo", niche:"Pizzarias", rating:4.8, ratingCount:1983, phone:"+55 11 3105-1700", address:"R. São Domingos, 84 - Bela Vista, São Paulo - SP"},
+  {name:"Drogaria São Paulo - Frei Caneca", city:"São Paulo", niche:"Farmácias", rating:3.4, ratingCount:445, phone:"+55 11 4858-7540", address:"R. Frei Caneca, 569 - Consolação, São Paulo - SP"},
+  {name:"Drogaria São Paulo - Ipiranga", city:"São Paulo", niche:"Farmácias", rating:3.4, ratingCount:369, phone:"+55 11 3223-0254", address:"Av. Ipiranga, 855 - República, São Paulo - SP"},
+  {name:"Vet Domus | Centro Veterinário 24H", city:"São Paulo", niche:"Veterinários", rating:4.8, ratingCount:443, phone:"+55 11 3034-0373", address:"R. Cipriano Juca, 61 - Pinheiros, São Paulo - SP"},
+  {name:"Wildvet Clínica Veterinária", city:"São Paulo", niche:"Veterinários", rating:4.7, ratingCount:1027, phone:"+55 11 3045-0045", address:"R. Prof. Vahia de Abreu, 514 - Itaim Bibi, São Paulo - SP"},
+  {name:"Veterinary Clinic Vetmasters", city:"São Paulo", niche:"Veterinários", rating:4.7, ratingCount:895, phone:"+55 11 3088-1845", address:"Av. Pacaembu, 1166 - Perdizes, São Paulo - SP"},
+  {name:"São Paulo Veterinary Hospital", city:"São Paulo", niche:"Veterinários", rating:4.5, ratingCount:2535, phone:"+55 11 2533-0000", address:"Av. Nordestina, 581 - Vila Americana, São Paulo - SP"},
+  {name:"Petz Marginal Tietê", city:"São Paulo", niche:"Pet shops", rating:4.4, ratingCount:23600, phone:"+55 11 3434-6980", address:"R. Dr. Miguel Paulo Capalbo, 166 - Pari, São Paulo - SP"},
+  {name:"Augusta Pet Shop", city:"São Paulo", niche:"Pet shops", rating:4.8, ratingCount:179, phone:"+55 11 3542-6372", address:"R. Augusta, 436 - Cerqueira César, São Paulo - SP"},
+  {name:"Pet Shop Bela Vista | Banho Carinhoso", city:"São Paulo", niche:"Pet shops", rating:4.7, ratingCount:374, phone:"+55 11 93326-9117", address:"R. Jacareí, 49 - Bela Vista, São Paulo - SP"},
+  {name:"Pão de Açúcar - Brig. Luís Antônio", city:"São Paulo", niche:"Supermercados", rating:3.8, ratingCount:14823, phone:"+55 800 779 6761", address:"Av. Brigadeiro Luís Antônio, 2013 - Bela Vista, São Paulo - SP"},
+  {name:"Carrefour - Pamplona", city:"São Paulo", niche:"Supermercados", rating:4.4, ratingCount:7890, phone:"+55 11 3004-2222", address:"R. Pamplona, 1704 - Jardim Paulista, São Paulo - SP"},
+  {name:"Mercado Municipal de São Paulo", city:"São Paulo", niche:"Supermercados", rating:4.5, ratingCount:202231, phone:"+55 11 4580-1390", address:"R. da Cantareira, 306 - Centro Histórico, São Paulo - SP"},
+  {name:"Padaria Bella Paulista", city:"São Paulo", niche:"Padarias", rating:4.5, ratingCount:56866, phone:"+55 11 3214-3347", address:"Rua Haddock Lobo, 354 - Cerqueira César, São Paulo - SP"},
+  {name:"Padaria Galeria dos Pães", city:"São Paulo", niche:"Padarias", rating:4.4, ratingCount:21562, phone:"+55 11 3064-5900", address:"R. Estados Unidos, 1645 - Jardim América, São Paulo - SP"},
+  {name:"Cepam", city:"São Paulo", niche:"Padarias", rating:4.6, ratingCount:46801, phone:"+55 11 4750-1306", address:"R. Ibitirama, 1409 - Vila Prudente, São Paulo - SP"},
+  {name:"Basilicata - Panetteria Mercato Cucina", city:"São Paulo", niche:"Padarias", rating:4.5, ratingCount:5888, phone:"+55 11 3289-3111", address:"R. Treze de Maio, 596 - Bela Vista, São Paulo - SP"},
+  {name:"Digitall Evolution - Marketing Digital", city:"São Paulo", niche:"Agências de marketing", rating:4.8, ratingCount:144, phone:"+55 11 94493-1956", address:"R. Leocádia Cintra, 118 - Mooca, São Paulo - SP"},
+  {name:"twist agência de publicidade", city:"São Paulo", niche:"Agências de publicidade", rating:4.8, ratingCount:71, phone:"+55 11 4225-1225", address:"Av. das Nações Unidas, 12901 - Cidade Monções, São Paulo - SP"},
+  {name:"MARDINI Agência Digital", city:"São Paulo", niche:"Agências de marketing", rating:5.0, ratingCount:136, phone:"+55 11 95445-5080", address:"R. Capitão Cavalcanti, 38 - Vila Mariana, São Paulo - SP"},
+  {name:"WebFormas", city:"São Paulo", niche:"Agências de marketing", rating:5.0, ratingCount:127, phone:"+55 11 2801-0067", address:"Av. Paulista, 1471 - Bela Vista, São Paulo - SP"},
+  {name:"Óticas Gassi - Paraíso", city:"São Paulo", niche:"Óticas", rating:4.9, ratingCount:16948, phone:"+55 11 3051-2882", address:"R. Dr. Tomás Carvalhal, 152 - Paraíso, São Paulo - SP"},
+  {name:"Óticas Felipe - Florêncio de Abreu", city:"São Paulo", niche:"Óticas", rating:5.0, ratingCount:19375, phone:"+55 11 3313-0043", address:"R. Florêncio de Abreu - Centro Histórico, São Paulo - SP"},
+  {name:"Óticas Felipe - Souza Nazaré", city:"São Paulo", niche:"Óticas", rating:4.9, ratingCount:2939, phone:"+55 11 3313-2580", address:"Rua Carlos de Sousa Nazaré, 160 - Centro Histórico, São Paulo - SP"},
+  {name:"Floricultura Salete", city:"São Paulo", niche:"Floriculturas", rating:4.7, ratingCount:5006, phone:"+55 11 2099-9510", address:"R. Dr. Zuquim, 1698 - Santana, São Paulo - SP"},
+  {name:"Villa das Artes Flores", city:"São Paulo", niche:"Floriculturas", rating:4.9, ratingCount:865, phone:"+55 11 96521-2237", address:"Av. Imirim, 253 - Imirim, São Paulo - SP"},
+  {name:"Floricultura Oia Flores", city:"São Paulo", niche:"Floriculturas", rating:4.9, ratingCount:735, phone:"+55 11 98069-5371", address:"Av. Bosque da Saúde, 1739 - Vila da Saúde, São Paulo - SP"},
+  {name:"Helena Flores", city:"São Paulo", niche:"Floriculturas", rating:4.9, ratingCount:430, phone:"+55 11 3791-2827", address:"Alameda Jaú, 1777 - Jardim Paulista, São Paulo - SP"},
+  {name:"Parada de Copa Restaurante", city:"Rio de Janeiro", niche:"Restaurantes", rating:4.6, ratingCount:1881, phone:"+55 21 3936-0450", address:"R. Barata Ribeiro, 450 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Joaquina", city:"Rio de Janeiro", niche:"Restaurantes", rating:4.7, ratingCount:5493, phone:"+55 21 2275-8569", address:"Av. Atlântica, 974 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Marius Degustare", city:"Rio de Janeiro", niche:"Restaurantes", rating:4.8, ratingCount:18270, phone:"+55 21 2275-0652", address:"Av. Atlântica, 290 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Restaurante Pérgula", city:"Rio de Janeiro", niche:"Restaurantes", rating:4.6, ratingCount:1299, phone:"+55 21 2548-7070", address:"Av. Atlântica, 1702 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Marine Restô", city:"Rio de Janeiro", niche:"Restaurantes", rating:4.5, ratingCount:506, phone:"+55 21 2525-1232", address:"Av. Atlântica, 4240 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Drogaria Max", city:"Rio de Janeiro", niche:"Farmácias", rating:4.8, ratingCount:857, phone:"+55 21 3973-7000", address:"Praça Condessa Paulo de Frontin, 48 - Rio Comprido, Rio de Janeiro - RJ"},
+  {name:"Drogaria Cristal 24H", city:"Rio de Janeiro", niche:"Farmácias", rating:4.5, ratingCount:664, phone:"+55 21 2567-1000", address:"R. Dr. Satamini, 156 - Tijuca, Rio de Janeiro - RJ"},
+  {name:"Farmácia Rio de Janeiro - Mais Barato", city:"Rio de Janeiro", niche:"Farmácias", rating:4.3, ratingCount:84, phone:"+55 21 2232-6464", address:"R. Riachuelo, 69 - Centro, Rio de Janeiro - RJ"},
+  {name:"Pet Zoyde Pet Shop Premium", city:"Rio de Janeiro", niche:"Pet shops", rating:4.8, ratingCount:1386, phone:"+55 21 98476-5754", address:"R. André Cavalcanti, 30 - Centro, Rio de Janeiro - RJ"},
+  {name:"Meu Bicho Pet Shop Taquara", city:"Rio de Janeiro", niche:"Pet shops", rating:4.9, ratingCount:986, phone:"+55 21 3496-1369", address:"Estr. do Tindiba, 664 - Taquara, Rio de Janeiro - RJ"},
+  {name:"Nosso Pet Favorito - Tijuca", city:"Rio de Janeiro", niche:"Pet shops", rating:4.9, ratingCount:271, phone:"+55 21 97117-1244", address:"Rua Conde de Bonfim, 831 - Tijuca, Rio de Janeiro - RJ"},
+  {name:"Palácio dos Pets", city:"Rio de Janeiro", niche:"Pet shops", rating:4.9, ratingCount:808, phone:"+55 21 3427-7347", address:"Estr. Vítor Dumas, 1483 - Santa Cruz, Rio de Janeiro - RJ"},
+  {name:"Restaurante Casa de Tereza", city:"Salvador", niche:"Restaurantes", rating:4.5, ratingCount:5670, phone:"+55 71 3329-3016", address:"R. Odilon Santos, 45 - Rio Vermelho, Salvador - BA"},
+  {name:"Amado", city:"Salvador", niche:"Restaurantes", rating:4.6, ratingCount:2403, phone:"+55 71 3322-3520", address:"Av. Lafayete Coutinho, 660 - Comércio, Salvador - BA"},
+  {name:"Boteco Português", city:"Salvador", niche:"Restaurantes", rating:4.8, ratingCount:4384, phone:"+55 71 3565-0599", address:"R. Borges dos Reis, 16 - Rio Vermelho, Salvador - BA"},
+  {name:"Restaurante Lafayette", city:"Salvador", niche:"Restaurantes", rating:4.6, ratingCount:2973, phone:"+55 71 98506-4637", address:"Av. Lafayete Coutinho, 1010 - Comércio, Salvador - BA"},
+  {name:"Restaurante Jorge Amado", city:"Aracaju", niche:"Restaurantes", rating:4.9, ratingCount:810, phone:"+55 79 99873-4203", address:"Av. Jorge Amado, 1259 - Jardins, Aracaju - SE"},
+  {name:"Terra Tupi", city:"Aracaju", niche:"Restaurantes", rating:4.6, ratingCount:2746, phone:"+55 79 99997-4351", address:"Av. Santos Dumont, 610 - Atalaia, Aracaju - SE"},
+  {name:"Restaurante Caçarola", city:"Aracaju", niche:"Restaurantes", rating:4.5, ratingCount:2741, phone:"+55 79 99831-9656", address:"Av. Ivo do Prado, 532 - Centro, Aracaju - SE"},
+  {name:"Sal e Brasa Steakhouse", city:"Aracaju", niche:"Restaurantes", rating:4.6, ratingCount:13575, phone:"+55 79 3255-1644", address:"Av. Santos Dumont, 75 - Coroa do Meio, Aracaju - SE"},
+  {name:"Mahalo Cozinha Criativa", city:"Cuiabá", niche:"Restaurantes", rating:4.7, ratingCount:1547, phone:"+55 65 3028-7700", address:"R. Pres. Castelo Branco, 359 - Quilombo, Cuiabá - MT"},
+  {name:"Restaurante e Bar Varadero", city:"Cuiabá", niche:"Restaurantes", rating:4.6, ratingCount:2369, phone:"+55 65 3027-5001", address:"R. Pres. Castelo Branco, 898 - Quilombo, Cuiabá - MT"},
+  {name:"Village Restaurante", city:"Cuiabá", niche:"Restaurantes", rating:4.5, ratingCount:194, phone:"+55 65 99922-0909", address:"Av. Sen. Filinto Müller, 402 - Popular, Cuiabá - MT"},
+  {name:"Talavera Bar e Restaurante", city:"Cuiabá", niche:"Restaurantes", rating:4.5, ratingCount:2958, phone:"+55 65 99923-7100", address:"Av. José Rodrigues do Prado, 40 - Santa Rosa, Cuiabá - MT"},
+  {name:"Cantina Masseria", city:"Campo Grande", niche:"Restaurantes", rating:4.6, ratingCount:4798, phone:"+55 67 3325-7722", address:"Av. Afonso Pena, 4311 - Jardim dos Estados, Campo Grande - MS"},
+  {name:"Coco Bambu Campo Grande", city:"Campo Grande", niche:"Restaurantes", rating:4.9, ratingCount:21887, phone:"+55 67 2107-7990", address:"Av. Afonso Pena, 4909 - Santa Fe, Campo Grande - MS"},
+  {name:"Casa Colonial", city:"Campo Grande", niche:"Restaurantes", rating:4.6, ratingCount:1072, phone:"+55 67 3383-3207", address:"Av. Afonso Pena, 3997 - Centro, Campo Grande - MS"},
+  {name:"Olivia Rooftop Eat & Drink", city:"Campo Grande", niche:"Restaurantes", rating:4.3, ratingCount:824, phone:"+55 67 99675-4058", address:"Av. Afonso Pena, 4059 - Jardim dos Estados, Campo Grande - MS"},
+  {name:"Cabana do Sol", city:"São Luís", niche:"Restaurantes", rating:4.7, ratingCount:11118, phone:"+55 98 3013-8664", address:"Av. Litorânea, 10 - Calhau, São Luís - MA"},
+  {name:"Casa de Juja", city:"São Luís", niche:"Restaurantes", rating:4.6, ratingCount:1085, phone:"+55 98 98768-6716", address:"Av. São Marcos, 12 - Ponta D'areia, São Luís - MA"},
+  {name:"Tasquinha Ferreiro", city:"São Luís", niche:"Restaurantes", rating:4.6, ratingCount:2303, phone:"+55 98 3181-8362", address:"R. dos Gaviões, 108 - Ponta do Farol, São Luís - MA"},
+  {name:"Armazém do Chef", city:"São Luís", niche:"Restaurantes", rating:4.7, ratingCount:1877, phone:"+55 98 98119-0737", address:"R. Uriacica, 15 - Calhau, São Luís - MA"},
+  {name:"Vasto Teresina", city:"Teresina", niche:"Restaurantes", rating:5.0, ratingCount:4070, phone:"+55 86 99991-2890", address:"Rua Professor Joca Vieira, 1269 - Jóquei, Teresina - PI"},
+  {name:"Faustino Restaurante", city:"Teresina", niche:"Restaurantes", rating:4.6, ratingCount:3323, phone:"+55 86 3305-2001", address:"Av. Dom Severino, 2155 - Horto, Teresina - PI"},
+  {name:"São João Restaurante", city:"Teresina", niche:"Restaurantes", rating:4.6, ratingCount:1188, phone:"+55 86 3233-9765", address:"Av. Nossa Sra. de Fátima, 2616 - Fátima, Teresina - PI"},
+  {name:"Santa Grelha Teresina", city:"Teresina", niche:"Restaurantes", rating:4.8, ratingCount:871, phone:"+55 86 3122-5195", address:"Av. Mar. Castelo Branco, 911 - Cabral, Teresina - PI"},
+  {name:"Restaurante Jatobá", city:"Porto Velho", niche:"Restaurantes", rating:4.9, ratingCount:755, phone:"+55 69 98103-9999", address:"Av. Lauro Sodré, 2211 - Olaria, Porto Velho - RO"},
+  {name:"Recanto Do Tambaqui", city:"Porto Velho", niche:"Restaurantes", rating:4.6, ratingCount:2649, phone:"+55 69 99964-9946", address:"Estr. de Santo Antônio, 510 - Vila Candelária, Porto Velho - RO"},
+  {name:"Restaurante Celeiro", city:"Porto Velho", niche:"Restaurantes", rating:4.7, ratingCount:2221, phone:"+55 69 3229-9493", address:"R. Rui Barbosa, 739 - Arigolândia, Porto Velho - RO"},
+  {name:"Quintal do Geléia", city:"Rio Branco", niche:"Restaurantes", rating:4.5, ratingCount:525, phone:"+55 68 99205-5827", address:"R. Minas Gerais, 108 - Dom Giocondo, Rio Branco - AC"},
+  {name:"Baixada do Sol I", city:"Rio Branco", niche:"Restaurantes", rating:4.6, ratingCount:1067, phone:"+55 68 99964-2104", address:"R. Campo Grande, 445 - João Eduardo, Rio Branco - AC"},
+  {name:"Restaurante Sabor Goiano", city:"Rio Branco", niche:"Restaurantes", rating:4.6, ratingCount:315, phone:"+55 68 99971-8551", address:"Av. Getúlio Vargas, 1992 - Bosque, Rio Branco - AC"},
+  {name:"A Casa do Rio Gastrobar", city:"Rio Branco", niche:"Restaurantes", rating:4.6, ratingCount:423, phone:"+55 68 99972-0714", address:"R. Barbosa Lima, 146 - Base, Rio Branco - AC"},
+  {name:"Restaurante Bendito Sabor", city:"Macapá", niche:"Restaurantes", rating:4.9, ratingCount:238, phone:"+55 96 98414-9026", address:"Av. Coaraci Nunes, 536 - Centro, Macapá - AP"},
+  {name:"Cantinho Baiano Restaurante", city:"Macapá", niche:"Restaurantes", rating:4.5, ratingCount:1287, phone:"+55 96 99193-8891", address:"R. Beira Rio, 328 - Santa Inês, Macapá - AP"},
+  {name:"Restaurante Amazonas Peixaria", city:"Macapá", niche:"Restaurantes", rating:4.6, ratingCount:1887, phone:"+55 96 3225-2008", address:"R. Beira Rio, 208 - Santa Inês, Macapá - AP"},
+  {name:"Restaurante João Do Camarão", city:"Macapá", niche:"Restaurantes", rating:4.4, ratingCount:3389, phone:"+55 96 99185-0115", address:"R. André de Oliveira Costa, 772 - Santa Inês, Macapá - AP"},
+  {name:"Casa Roraima Restaurante e Galeteria", city:"Boa Vista", niche:"Restaurantes", rating:4.7, ratingCount:756, phone:"+55 95 98119-0025", address:"Av. Santos Dumont, 1952 - Trinta e Um de Março, Boa Vista - RR"},
+  {name:"Restaurante Recanto da Peixada", city:"Boa Vista", niche:"Restaurantes", rating:4.5, ratingCount:5431, phone:"+55 95 3623-7007", address:"Av. Maj. Williams, 1670 - São Francisco, Boa Vista - RR"},
+  {name:"Mr.Quilo Restaurante e Churrascaria", city:"Boa Vista", niche:"Restaurantes", rating:4.6, ratingCount:1169, phone:"+55 95 3623-9185", address:"R. Floriano Peixoto, 269 - Centro, Boa Vista - RR"},
+  {name:"Riu Restaurante", city:"Boa Vista", niche:"Restaurantes", rating:4.6, ratingCount:2565, phone:"+55 95 99162-6044", address:"R. Floriano Peixoto, 545 - Centro, Boa Vista - RR"},
+  {name:"Cabana do Lago Restaurante", city:"Palmas", niche:"Restaurantes", rating:4.5, ratingCount:2660, phone:"+55 63 3215-4989", address:"Q. 103 Sul, Rua SO 11 - Centro, Palmas - TO"},
+  {name:"Dona Maria Beach", city:"Palmas", niche:"Restaurantes", rating:4.3, ratingCount:4165, phone:"+55 63 99217-3671", address:"Orla Dona Maria Beach - Plano Diretor Sul, Palmas - TO"},
+  {name:"Veleiros do Sol Restaurante", city:"Palmas", niche:"Restaurantes", rating:4.6, ratingCount:306, phone:"+55 63 99237-3015", address:"Quadra 402 Sul - Plano Diretor Sul, Palmas - TO"},
+  {name:"Tastro Gastrobar", city:"Palmas", niche:"Restaurantes", rating:4.5, ratingCount:809, phone:"+55 63 99911-3399", address:"Praia da Graciosa - Plano Diretor Sul, Palmas - TO"},
+  {name:"Barba Mia", city:"Brasília", niche:"Barbearias", rating:4.9, ratingCount:551, phone:"+55 61 3254-1434", address:"SHCS CLS 202 Bloco B Loja 28 - Asa Sul, Brasília - DF"},
+  {name:"Barbearia Park Sul", city:"Brasília", niche:"Barbearias", rating:5.0, ratingCount:1100, phone:"+55 61 99986-9940", address:"St. Park Sul, Q. 3 - Guará, Brasília - DF"},
+  {name:"Inova Barbearia", city:"Brasília", niche:"Barbearias", rating:4.7, ratingCount:1428, phone:"+55 61 99870-0800", address:"Av. das Castanheiras, 36 - Águas Claras, Brasília - DF"},
+  {name:"Drogaria Brasil 302 Sul", city:"Brasília", niche:"Farmácias", rating:4.2, ratingCount:148, phone:"+55 61 3053-5757", address:"SHCS CLS 302 Bl C Lj 07 - Asa Sul, Brasília - DF"},
+  {name:"Rede Bem Drogarias Asa Sul", city:"Brasília", niche:"Farmácias", rating:4.9, ratingCount:60, phone:"+55 61 98360-0007", address:"SEPS 710/910 Conjunto D Lj 28 - Asa Sul, Brasília - DF"},
+  {name:"Barbearia Bianchinni", city:"Manaus", niche:"Barbearias", rating:4.9, ratingCount:485, phone:"+55 92 98460-7888", address:"R. Salvador, 686 - Adrianópolis, Manaus - AM"},
+  {name:"Barbearia Spartan", city:"Manaus", niche:"Barbearias", rating:4.8, ratingCount:455, phone:"+55 92 99186-0935", address:"Av. Castelo Branco, 1530 - Cachoeirinha, Manaus - AM"},
+  {name:"Dario's Barbearia", city:"Manaus", niche:"Barbearias", rating:5.0, ratingCount:404, phone:"+55 92 99160-7139", address:"Av. Djalma Batista, 1661 - Chapada, Manaus - AM"},
+  {name:"STUDIO X Salão de Beleza", city:"Manaus", niche:"Salões de beleza", rating:4.9, ratingCount:1115, phone:"+55 92 98414-9208", address:"Av. Timbiras, 972 - Cidade Nova, Manaus - AM"},
+  {name:"Casa das Divas - Salão de Beleza", city:"Manaus", niche:"Salões de beleza", rating:5.0, ratingCount:719, phone:"+55 92 98163-7626", address:"R. Rio Javari, 17 - N. Sra. das Graças, Manaus - AM"},
+  {name:"Don Felix Barbershop", city:"Salvador", niche:"Barbearias", rating:5.0, ratingCount:1018, phone:"+55 71 99993-4070", address:"R. César Zama, 05 - Barra, Salvador - BA"},
+  {name:"Barbearia Dom Barbudo Barber Club", city:"Salvador", niche:"Barbearias", rating:5.0, ratingCount:1495, phone:"+55 71 98261-7468", address:"Av. Tancredo Neves, 2227 - Caminho das Árvores, Salvador - BA"},
+  {name:"Ludo Performance Barber", city:"Salvador", niche:"Barbearias", rating:4.9, ratingCount:97, phone:"+55 71 99202-0269", address:"R. Rodolpho Coelho Cavalcante, 109 - Jardim Armação, Salvador - BA"},
+  {name:"Village Bread", city:"Salvador", niche:"Padarias", rating:4.4, ratingCount:971, phone:"+55 71 3249-5028", address:"R. Srg. Valmir V. Bannach - Jardim Placaford, Salvador - BA"},
+  {name:"Padoca Salvador Prime", city:"Salvador", niche:"Padarias", rating:4.4, ratingCount:140, phone:"+55 71 99252-0006", address:"Av. Tancredo Neves, 2227 - Caminho das Árvores, Salvador - BA"},
+  {name:"Ivan Barbershop Aldeota", city:"Fortaleza", niche:"Barbearias", rating:4.7, ratingCount:344, phone:"+55 85 99986-1703", address:"Av. Dom Luís, 500 - Aldeota, Fortaleza - CE"},
+  {name:"Zé Barbeiro - Aldeota", city:"Fortaleza", niche:"Barbearias", rating:5.0, ratingCount:1498, phone:"+55 85 3039-4258", address:"R. Osvaldo Cruz, 1266 - Aldeota, Fortaleza - CE"},
+  {name:"Barbearia Silveira's Club", city:"Fortaleza", niche:"Barbearias", rating:4.9, ratingCount:574, phone:"+55 85 99673-0211", address:"R. Eduardo Salgado, 156 - Aldeota, Fortaleza - CE"},
+  {name:"Vasto Restaurante Fortaleza", city:"Fortaleza", niche:"Restaurantes", rating:4.9, ratingCount:11355, phone:"+55 85 99413-0650", address:"Av. Sen. Virgílio Távora, 511 - Meireles, Fortaleza - CE"},
+  {name:"Villa Restaurante", city:"Fortaleza", niche:"Restaurantes", rating:4.8, ratingCount:940, phone:"+55 85 3879-0120", address:"R. Maria Tomásia, 718 - Aldeota, Fortaleza - CE"},
+  {name:"Moleska Gastrobar", city:"Fortaleza", niche:"Restaurantes", rating:4.8, ratingCount:8004, phone:"+55 85 99113-5964", address:"R. Prof. Dias da Rocha, 578 - Meireles, Fortaleza - CE"},
+  {name:"Barbearia Rave Studio", city:"Recife", niche:"Barbearias", rating:5.0, ratingCount:363, phone:"+55 81 99680-8276", address:"R. Jorge Couceiro da Costa Eiras, 671 - Boa Viagem, Recife - PE"},
+  {name:"Barbearia Recife", city:"Recife", niche:"Barbearias", rating:4.9, ratingCount:321, phone:"+55 81 3204-7136", address:"R. Dr. Arthur Gonçalves, 142 - Madalena, Recife - PE"},
+  {name:"Cabra Macho Barbearia", city:"Recife", niche:"Barbearias", rating:4.9, ratingCount:89, phone:"+55 81 98544-6926", address:"Estr. do Forte do Arraial - Cordeiro, Recife - PE"},
+  {name:"Vasto Restaurante Recife", city:"Recife", niche:"Restaurantes", rating:4.9, ratingCount:4753, phone:"+55 81 3038-7080", address:"Shopping Recife - Boa Viagem, Recife - PE"},
+  {name:"Adega do Futuro", city:"Recife", niche:"Restaurantes", rating:4.9, ratingCount:972, phone:"+55 81 98179-4018", address:"R. do Futuro, 634 - Graças, Recife - PE"},
+  {name:"A Casa Salu", city:"Recife", niche:"Restaurantes", rating:4.9, ratingCount:2227, phone:"+55 81 98629-3377", address:"R. José da Silva Lucena, 84 - Imbiribeira, Recife - PE"},
+  {name:"Restaurante Ninita", city:"Belo Horizonte", niche:"Restaurantes", rating:4.6, ratingCount:1580, phone:"+55 31 3292-4237", address:"R. Bárbara Heliodora, 71 - Lourdes, Belo Horizonte - MG"},
+  {name:"Restaurante Xapuri", city:"Belo Horizonte", niche:"Restaurantes", rating:4.6, ratingCount:9875, phone:"+55 31 3496-6198", address:"Rua Mandacaru, 260 - Trevo, Belo Horizonte - MG"},
+  {name:"Tudo na Brasa", city:"Belo Horizonte", niche:"Restaurantes", rating:4.6, ratingCount:19211, phone:"+55 31 3471-0222", address:"Av. dos Engenheiros, 1104 - Castelo, Belo Horizonte - MG"},
+  {name:"Terraço Niê", city:"Belo Horizonte", niche:"Restaurantes", rating:4.7, ratingCount:2149, phone:"+55 31 99062-5530", address:"R. Rio de Janeiro, 471 - Centro, Belo Horizonte - MG"},
+  {name:"Trintaeum", city:"Belo Horizonte", niche:"Restaurantes", rating:4.8, ratingCount:936, phone:"+55 31 99866-0135", address:"R. Prof. Antônio Aleixo, 20 - Lourdes, Belo Horizonte - MG"},
+  {name:"Padaria Vianney", city:"Belo Horizonte", niche:"Padarias", rating:4.3, ratingCount:7001, phone:"+55 31 3227-2071", address:"R. dos Aimorés, 200 - Funcionários, Belo Horizonte - MG"},
+  {name:"Hangar dos Pães", city:"Belo Horizonte", niche:"Padarias", rating:4.5, ratingCount:12051, phone:"+55 31 3566-7063", address:"Av. Portugal, 4304 - Jardim Atlântico, Belo Horizonte - MG"},
+  {name:"Fofo de Belas - Padaria & Brunch", city:"Belo Horizonte", niche:"Padarias", rating:4.6, ratingCount:3295, phone:"+55 31 98207-3003", address:"R. Marília de Dirceu, 48 - Lourdes, Belo Horizonte - MG"},
+  {name:"Casa Bonomi", city:"Belo Horizonte", niche:"Padarias", rating:4.4, ratingCount:3127, phone:"+55 31 99206-2772", address:"Av. Afonso Pena, 2600 - Funcionários, Belo Horizonte - MG"},
+  {name:"Second House Pizzaria", city:"Belo Horizonte", niche:"Pizzarias", rating:4.8, ratingCount:2325, phone:"+55 31 97199-4445", address:"R. Barão de Macaúbas, 109 - Santo Antônio, Belo Horizonte - MG"},
+  {name:"68 Pizza", city:"Belo Horizonte", niche:"Pizzarias", rating:4.4, ratingCount:3459, phone:"+55 31 3292-0208", address:"R. Felipe dos Santos, 68 - Lourdes, Belo Horizonte - MG"},
+  {name:"Donna Margherita", city:"Belo Horizonte", niche:"Pizzarias", rating:4.4, ratingCount:10322, phone:"+55 31 3224-6179", address:"Av. Carandaí, 840 - Funcionários, Belo Horizonte - MG"},
+  {name:"Pizzaria Olegário Lourdes", city:"Belo Horizonte", niche:"Pizzarias", rating:4.5, ratingCount:3095, phone:"+55 31 3337-4446", address:"Av. Olegário Maciel, 1748 - Lourdes, Belo Horizonte - MG"},
+  {name:"El Cartel Fernandes - Barbearia Copacabana", city:"Rio de Janeiro", niche:"Barbearias", rating:5.0, ratingCount:2724, phone:"+55 51 98583-1601", address:"R. Barata Ribeiro, 774 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Barbearia Don Maestro", city:"Rio de Janeiro", niche:"Barbearias", rating:4.9, ratingCount:727, phone:"+55 21 99877-8384", address:"R. Santo Afonso, 263 - Tijuca, Rio de Janeiro - RJ"},
+  {name:"Barbearia do Zé - Botafogo", city:"Rio de Janeiro", niche:"Barbearias", rating:4.8, ratingCount:1119, phone:"+55 21 99327-6942", address:"R. Paulino Fernandes, 29 - Botafogo, Rio de Janeiro - RJ"},
+  {name:"CORTEZ Barbearia", city:"Rio de Janeiro", niche:"Barbearias", rating:4.9, ratingCount:751, phone:"+55 21 99773-2282", address:"R. Barata Ribeiro, 658 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Mr. Hair Club", city:"Rio de Janeiro", niche:"Barbearias", rating:4.9, ratingCount:1643, phone:"+55 21 2523-0926", address:"Rua Djalma Ulrich, 163 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Barbearia Retrô", city:"Rio de Janeiro", niche:"Barbearias", rating:4.9, ratingCount:446, phone:"+55 21 3420-8822", address:"R. Marquês de Paraná, 10 - Flamengo, Rio de Janeiro - RJ"},
+  {name:"The Blonde Concept - Savassi", city:"Belo Horizonte", niche:"Salões de beleza", rating:4.9, ratingCount:1567, phone:null, address:"R. Alagoas, 450 - Boa Viagem, Belo Horizonte - MG"},
+  {name:"Elegance Salon", city:"Belo Horizonte", niche:"Salões de beleza", rating:4.9, ratingCount:1003, phone:"+55 31 3654-1073", address:"R. Ouro Preto, 1588 - Santo Agostinho, Belo Horizonte - MG"},
+  {name:"LOTUS Beauty Institute", city:"Belo Horizonte", niche:"Salões de beleza", rating:4.9, ratingCount:200, phone:"+55 31 99890-4980", address:"Rua dos Tupis, 193 - Centro, Belo Horizonte - MG"},
+  {name:"Victorian Space - Esmalteria Beauty and Bridal", city:"Belo Horizonte", niche:"Salões de beleza", rating:5.0, ratingCount:1635, phone:"+55 31 98308-5970", address:"R. Dr. Rubens Guimarães, 15 - Castelo, Belo Horizonte - MG"},
+  {name:"LB Beauty - Salão de Beleza", city:"Belo Horizonte", niche:"Salões de beleza", rating:4.9, ratingCount:374, phone:"+55 31 98959-8607", address:"R. Antônio de Albuquerque, 335 - Funcionários, Belo Horizonte - MG"},
+  {name:"CETAC - Centro de Diagnóstico por Imagem", city:"Curitiba", niche:"Clínicas", rating:4.5, ratingCount:3100, phone:"+55 41 3270-3270", address:"R. Padre Ildefonso, 105 - Batel, Curitiba - PR"},
+  {name:"Clínica Woitas", city:"Curitiba", niche:"Clínicas", rating:5.0, ratingCount:409, phone:"+55 41 3010-0301", address:"Av. Visc. de Guarapuava, 4628 - Batel, Curitiba - PR"},
+  {name:"Clínica Premium Curitiba", city:"Curitiba", niche:"Clínicas", rating:4.9, ratingCount:658, phone:"+55 41 99943-9053", address:"R. Bom Jesus, 82 - Juvevê, Curitiba - PR"},
+  {name:"Moinhos Fitness - Silva Só", city:"Porto Alegre", niche:"Academias", rating:4.2, ratingCount:1270, phone:"+55 51 3023-6272", address:"R. Silva Só, 355 - Rio Branco, Porto Alegre - RS"},
+  {name:"Just Burn Club", city:"Porto Alegre", niche:"Academias", rating:4.7, ratingCount:197, phone:"+55 51 99696-1775", address:"R. Fernando Gomes, 114 - Moinhos de Vento, Porto Alegre - RS"},
+  {name:"Academia INEEX", city:"Porto Alegre", niche:"Academias", rating:4.6, ratingCount:396, phone:"+55 51 3030-4848", address:"Praça Japão, 30 - Boa Vista, Porto Alegre - RS"},
+  {name:"Moinhos Fitness - Ipiranga", city:"Porto Alegre", niche:"Academias", rating:4.3, ratingCount:824, phone:"+55 51 98691-0016", address:"Av. Ipiranga, 7721 - Partenon, Porto Alegre - RS"},
+  {name:"A Predial Imobiliária", city:"Fortaleza", niche:"Imobiliárias", rating:4.7, ratingCount:6585, phone:"+55 85 4012-8000", address:"Av. Santos Dumont, 2767 - Aldeota, Fortaleza - CE"},
+  {name:"Imobiliária Magno Muniz", city:"Fortaleza", niche:"Imobiliárias", rating:4.9, ratingCount:1037, phone:"+55 85 3265-6969", address:"Av. Engenheiro Alberto Sá, 559 - Papicu, Fortaleza - CE"},
+  {name:"César Rêgo Imóveis", city:"Fortaleza", niche:"Imobiliárias", rating:4.9, ratingCount:991, phone:"+55 85 3305-3000", address:"R. Vicente Linhares, 521 - Aldeota, Fortaleza - CE"},
+  {name:"Imobiliária Torres de Melo Neto", city:"Fortaleza", niche:"Imobiliárias", rating:4.7, ratingCount:1025, phone:"+55 85 4011-0800", address:"R. Prof. Dias da Rocha, 162 - Meireles, Fortaleza - CE"},
+  {name:"NEOPE - Core Specialized in Dentistry", city:"Recife", niche:"Dentistas", rating:4.9, ratingCount:1687, phone:"+55 81 3302-6390", address:"Av. Frei Matias Teves, 285 - Ilha do Leite, Recife - PE"},
+  {name:"Dra. Aryadnne Vasconcelos - Smart Odonto", city:"Recife", niche:"Dentistas", rating:5.0, ratingCount:119, phone:"+55 81 98471-1701", address:"Av. Conselheiro Rosa e Silva, 1460 - Graças, Recife - PE"},
+  {name:"Dra. Juliana Andrade", city:"Recife", niche:"Dentistas", rating:5.0, ratingCount:68, phone:"+55 81 98729-2581", address:"R. Silva Ramos, 37 - Boa Vista, Recife - PE"},
+  {name:"Dento Clínica Infinity Clinic", city:"Recife", niche:"Dentistas", rating:4.9, ratingCount:565, phone:"+55 81 3771-0776", address:"Av. Recife, 924 - Areias, Recife - PE"},
+  {name:"OdontoRec", city:"Recife", niche:"Dentistas", rating:4.9, ratingCount:479, phone:"+55 81 3072-5848", address:"Av. Conde da Boa Vista, 1425 - Boa Vista, Recife - PE"},
+  {name:"Oca Moda Feminina", city:"Salvador", niche:"Lojas", rating:5.0, ratingCount:85, phone:"+55 71 3240-8278", address:"Rua Oswaldo Cruz, 372 - Rio Vermelho, Salvador - BA"},
+  {name:"The Store", city:"Salvador", niche:"Lojas", rating:5.0, ratingCount:60, phone:"+55 71 99353-4321", address:"Av. Jorge Amado, 2464 - Imbuí, Salvador - BA"},
+  {name:"Legbox", city:"Salvador", niche:"Lojas", rating:4.8, ratingCount:2372, phone:"+55 71 99712-8059", address:"Rua Itagi - Vila Laura, Salvador - BA"},
+  {name:"Dymilla Store - Moda Feminina", city:"Salvador", niche:"Lojas", rating:4.9, ratingCount:19, phone:"+55 71 98844-4101", address:"R. do Tamarineiro, 23 - Itapuã, Salvador - BA"},
+  {name:"BLN Contabilidade", city:"São Paulo", niche:"Escritórios", rating:4.9, ratingCount:65, phone:"+55 11 99943-3341", address:"Av. Paulista, 491 - Bela Vista, São Paulo - SP"},
+  {name:"D&D Contabilidade", city:"São Paulo", niche:"Escritórios", rating:4.9, ratingCount:77, phone:"+55 11 99863-6698", address:"R. Líbero Badaró, 137 - Centro, São Paulo - SP"},
+  {name:"Contjet | Escritório de Contabilidade", city:"São Paulo", niche:"Escritórios", rating:4.9, ratingCount:181, phone:"+55 11 94445-6316", address:"R. Pais Leme, 524 - Pinheiros, São Paulo - SP"},
+  {name:"Nikkey Palace Hotel", city:"São Paulo", niche:"Hotéis", rating:4.4, ratingCount:4520, phone:"+55 11 3207-8511", address:"R. Galvão Bueno, 425 - Liberdade, São Paulo - SP"},
+  {name:"Hotel Dan Inn São Paulo Higienópolis", city:"São Paulo", niche:"Hotéis", rating:3.7, ratingCount:1476, phone:"+55 19 2137-7753", address:"R. Maria Antônia, 40 - Higienópolis, São Paulo - SP"},
+  {name:"Fênix Hotel Bom Retiro", city:"São Paulo", niche:"Hotéis", rating:3.9, ratingCount:713, phone:"+55 11 3326-2099", address:"Rua Prates, 324 - Bom Retiro, São Paulo - SP"},
+  {name:"Daldegan Fotografia", city:"São Paulo", niche:"Fotógrafos", rating:5.0, ratingCount:471, phone:"+55 11 98562-4914", address:"R. Gaivota, 988 - Moema, São Paulo - SP"},
+  {name:"Estúdio Thais Silva Fotografia", city:"São Paulo", niche:"Fotógrafos", rating:5.0, ratingCount:260, phone:"+55 11 98910-7543", address:"R. do Bosque, 1484 - Barra Funda, São Paulo - SP"},
+  {name:"São Paulo Fotografia", city:"São Paulo", niche:"Fotógrafos", rating:5.0, ratingCount:49, phone:"+55 11 99558-1047", address:"R. Augusta - Cerqueira César, São Paulo - SP"},
+  {name:"Ale Fotógrafo", city:"São Paulo", niche:"Fotógrafos", rating:4.9, ratingCount:144, phone:"+55 11 91355-0533", address:"Alameda Santos, 1165 - Bela Vista, São Paulo - SP"},
+  {name:"Oficina Grandes Mecânicos SÓGM", city:"São Paulo", niche:"Mecânicas", rating:5.0, ratingCount:758, phone:"+55 11 97383-8348", address:"R. Gen. Júlio Marcondes Salgado, 211 - Santa Cecília, São Paulo - SP"},
+  {name:"Riveros Serviços Automotivos", city:"São Paulo", niche:"Mecânicas", rating:5.0, ratingCount:188, phone:"+55 11 5587-1554", address:"Rua Luís Góis, 187 - Mirandópolis, São Paulo - SP"},
+  {name:"Beretta Oficina Mecânica", city:"São Paulo", niche:"Mecânicas", rating:4.9, ratingCount:83, phone:"+55 11 94252-5230", address:"R. Cel. Diogo, 15 - Jardim da Glória, São Paulo - SP"},
+  {name:"Oficina JP Mecânica e Auto Elétrico", city:"São Paulo", niche:"Mecânicas", rating:4.9, ratingCount:133, phone:"+55 11 95451-6034", address:"Av. Prof. Noé Azevedo, 310 - Vila Mariana, São Paulo - SP"},
+  {name:"Think Digital - Empresa de Tecnologia", city:"São Paulo", niche:"Empresas de tecnologia", rating:5.0, ratingCount:17, phone:"+55 11 93056-8562", address:"R. Tamoios, 246 - Jardim Aeroporto, São Paulo - SP"},
+  {name:"Elinfor Tecnologia da Informação", city:"São Paulo", niche:"Empresas de tecnologia", rating:5.0, ratingCount:29, phone:"+55 11 4063-8222", address:"Av. Brig. Luís Antônio, 2397 - Jardim Paulista, São Paulo - SP"},
+  {name:"Fortes Tecnologia", city:"São Paulo", niche:"Empresas de tecnologia", rating:5.0, ratingCount:12, phone:"+55 11 2189-0233", address:"R. Cincinato Braga, 59 - Bela Vista, São Paulo - SP"},
+  {name:"TRIYO Tecnologia da Informação", city:"São Paulo", niche:"Empresas de tecnologia", rating:4.9, ratingCount:17, phone:"+55 11 2391-2040", address:"Rua Pedro de Toledo, 130 - Vila Clementino, São Paulo - SP"},
+  {name:"Figueiredo Sociedade de Advogados", city:"São Paulo", niche:"Profissionais autônomos", rating:5.0, ratingCount:1478, phone:"+55 11 94745-3744", address:"Av. Paulista, 1765 - Bela Vista, São Paulo - SP"},
+  {name:"Marcos Viveiro Advogados", city:"São Paulo", niche:"Profissionais autônomos", rating:4.9, ratingCount:355, phone:"+55 11 97341-3643", address:"Av. Gen. Ataliba Leonel, 2594 - Parada Inglesa, São Paulo - SP"},
+  {name:"Mariana Muniz - Advocacia & Assessoria Jurídica", city:"São Paulo", niche:"Profissionais autônomos", rating:5.0, ratingCount:28, phone:"+55 11 98928-1038", address:"Av. Brig. Faria Lima, 1572 - Jardim Paulistano, São Paulo - SP"},
+  {name:"Pinheiro Advogados Associados", city:"São Paulo", niche:"Profissionais autônomos", rating:5.0, ratingCount:103, phone:"+55 11 99702-8585", address:"R. Alferes Magalhães, 92 - Santana, São Paulo - SP"},
+  {name:"ASG Advocacia", city:"São Paulo", niche:"Profissionais autônomos", rating:4.8, ratingCount:104, phone:"+55 11 91602-3200", address:"R. Alto Belo, 796 - Vila Antonieta, São Paulo - SP"},
+  {name:"Vera Robalo Barbearia", city:"São Paulo", niche:"Barbearias", rating:5.0, ratingCount:279, phone:"+55 11 95911-5064", address:"R. Safira, 77 - Aclimação, São Paulo - SP"},
+  {name:"Barbearia Corleone | Itaim Bibi", city:"São Paulo", niche:"Barbearias", rating:4.7, ratingCount:1005, phone:"+55 11 2538-8009", address:"R. Dr. Renato Paes de Barros, 390 - Itaim Bibi, São Paulo - SP"},
+  {name:"Barbearia PRIME SP", city:"São Paulo", niche:"Barbearias", rating:5.0, ratingCount:69, phone:"+55 11 94983-6560", address:"R. Maj. Diogo, 316 - Bela Vista, São Paulo - SP"},
+  {name:"Fran's Barbearia", city:"São Paulo", niche:"Barbearias", rating:5.0, ratingCount:184, phone:"+55 11 96032-9910", address:"R. Tabatinguera, 513 - Sé, São Paulo - SP"},
+  {name:"Paris Vegas Beauty", city:"São Paulo", niche:"Salões de beleza", rating:4.9, ratingCount:324, phone:"+55 11 93372-3705", address:"Alameda Jauaperi, 744 - Moema, São Paulo - SP"},
+  {name:"EVE Concept Salon", city:"São Paulo", niche:"Salões de beleza", rating:4.9, ratingCount:254, phone:"+55 11 94264-2403", address:"R. Carlos Sampaio, 201 - Bela Vista, São Paulo - SP"},
+  {name:"MK Studio Hair - Salão em Paraíso SP", city:"São Paulo", niche:"Salões de beleza", rating:4.9, ratingCount:88, phone:"+55 11 98644-2657", address:"R. Abílio Soares, 550 - Paraíso, São Paulo - SP"},
+  {name:"Venice Hair - Beauty Salon", city:"São Paulo", niche:"Salões de beleza", rating:4.5, ratingCount:543, phone:"+55 11 3262-3248", address:"Alameda Santos, 880 - Jardim Paulista, São Paulo - SP"},
+  {name:"Clínica Acor", city:"São Paulo", niche:"Clínicas", rating:4.2, ratingCount:761, phone:"+55 11 5094-0300", address:"R. Dom José de Barros, 79 - República, São Paulo - SP"},
+  {name:"Clínica Fares - Osasco", city:"São Paulo", niche:"Clínicas", rating:4.8, ratingCount:10344, phone:"+55 11 3851-4000", address:"R. Antônio Agú, 630 - Osasco - SP"},
+  {name:"Clínica MedPaulista", city:"São Paulo", niche:"Clínicas", rating:4.6, ratingCount:47, phone:"+55 11 3287-3552", address:"R. Teixeira da Silva, 34 - Bela Vista, São Paulo - SP"},
+  {name:"CT Miami", city:"São Paulo", niche:"Academias", rating:4.8, ratingCount:257, phone:"+55 11 93428-6769", address:"Av. Nove de Julho, 585 - Bela Vista, São Paulo - SP"},
+  {name:"Academia Bio Ritmo - Paulista", city:"São Paulo", niche:"Academias", rating:4.5, ratingCount:1002, phone:null, address:"Av. Paulista, 2073 - Bela Vista, São Paulo - SP"},
+  {name:"Leven Academies - Paraíso", city:"São Paulo", niche:"Academias", rating:5.0, ratingCount:240, phone:"+55 11 99850-1064", address:"R. Tutóia, 765 - Vila Mariana, São Paulo - SP"},
+  {name:"Spin 'n Soul", city:"São Paulo", niche:"Academias", rating:4.9, ratingCount:1336, phone:"+55 11 3078-9437", address:"R. Dr. Mário Ferraz, 589 - Itaim Bibi, São Paulo - SP"},
+  {name:"Absolutti José Paulino 492", city:"São Paulo", niche:"Lojas", rating:4.2, ratingCount:101, phone:"+55 11 3331-7429", address:"R. José Paulino, 492 - Bom Retiro, São Paulo - SP"},
+  {name:"Imobiliária Nova São Paulo - Vila da Saúde", city:"São Paulo", niche:"Imobiliárias", rating:4.6, ratingCount:2057, phone:"+55 11 97489-2840", address:"Av. Jabaquara, 1947 - Vila da Saúde, São Paulo - SP"},
+  {name:"Grupo Urban Imobiliária", city:"São Paulo", niche:"Imobiliárias", rating:4.7, ratingCount:248, phone:"+55 11 4210-1616", address:"R. Estados Unidos, 812 - Jardim América, São Paulo - SP"},
+  {name:"REMAX Mamede - Zona Norte", city:"São Paulo", niche:"Imobiliárias", rating:4.9, ratingCount:812, phone:"+55 11 94712-9914", address:"Av. Leôncio de Magalhães, 1341 - Jardim São Paulo, São Paulo - SP"},
+  {name:"JR Portela Imóveis", city:"São Paulo", niche:"Imobiliárias", rating:5.0, ratingCount:203, phone:"+55 11 97041-6333", address:"Rua Vergueiro, 266 - Liberdade, São Paulo - SP"},
+  {name:"Clínica Odontológica Dra. Mayara Vianna", city:"São Paulo", niche:"Dentistas", rating:5.0, ratingCount:73, phone:"+55 11 96473-0924", address:"R. José Bonifácio, 176 - Centro, São Paulo - SP"},
+  {name:"Dra Camilla Grisotto | Dentista", city:"São Paulo", niche:"Dentistas", rating:5.0, ratingCount:91, phone:"+55 11 98828-6035", address:"Av. Brigadeiro Luís Antônio, 350 - Bela Vista, São Paulo - SP"},
+  {name:"Dr Erick Andrade - Dentista", city:"São Paulo", niche:"Dentistas", rating:5.0, ratingCount:199, phone:"+55 11 99251-5610", address:"R. Tabatinguera, 140 - Sé, São Paulo - SP"},
+  {name:"Dentista 24h Centro SP - Dr. Bruno Frison", city:"São Paulo", niche:"Dentistas", rating:5.0, ratingCount:183, phone:"+55 11 99629-1093", address:"R. Tabatinguera, 140 - Sé, São Paulo - SP"},
+  {name:"SAO Store Shopping Light", city:"São Paulo", niche:"Lojas", rating:5.0, ratingCount:119, phone:"+55 11 93206-2052", address:"R. Cel. Xavier de Toledo, 23 - República, São Paulo - SP"},
+  {name:"Lacoste Outlet", city:"São Paulo", niche:"Lojas", rating:4.0, ratingCount:547, phone:"+55 11 3258-9595", address:"R. Cel. Xavier de Toledo, 23 - Centro, São Paulo - SP"},
+  {name:"Sebra - Clothes for Cold", city:"Rio de Janeiro", niche:"Lojas", rating:5.0, ratingCount:5907, phone:"+55 21 2224-2995", address:"R. da Alfândega, 181 - Centro, Rio de Janeiro - RJ"},
+  {name:"Loja Voah - Moda Feminina Copacabana", city:"Rio de Janeiro", niche:"Lojas", rating:5.0, ratingCount:233, phone:"+55 21 99552-5437", address:"R. Santa Clara, 33 - Copacabana, Rio de Janeiro - RJ"},
+  {name:"Moda Plus Size - NaBeca Tamanhos Reais", city:"Rio de Janeiro", niche:"Lojas", rating:4.9, ratingCount:449, phone:"+55 21 98898-8883", address:"R. Miguel Couto, 40 - Centro, Rio de Janeiro - RJ"},
+  {name:"Help! Store - Moda Feminina", city:"Belo Horizonte", niche:"Lojas", rating:4.9, ratingCount:292, phone:"+55 31 99863-2076", address:"R. Pintagol, 45 - Alto Caiçaras, Belo Horizonte - MG"},
+  {name:"Zás Loja", city:"Belo Horizonte", niche:"Lojas", rating:4.9, ratingCount:109, phone:"+55 31 99770-4302", address:"R. Tomé de Souza, 830 - Funcionários, Belo Horizonte - MG"},
+  {name:"Moda Chick", city:"Belo Horizonte", niche:"Lojas", rating:4.9, ratingCount:1293, phone:"+55 31 99551-0137", address:"Rua dos Tupis, 560c - Centro, Belo Horizonte - MG"},
+  {name:"Winter Moda Feminina Curitiba", city:"Curitiba", niche:"Lojas", rating:4.9, ratingCount:469, phone:"+55 41 99119-7273", address:"R. Holanda, 244 - Bacacheri, Curitiba - PR"},
+  {name:"Attitude", city:"Curitiba", niche:"Lojas", rating:4.5, ratingCount:50, phone:"+55 41 99747-7670", address:"R. Mal. Deodoro, 811 - Centro, Curitiba - PR"},
+  {name:"Maria Perfeita Casual e Moda Festa", city:"Curitiba", niche:"Lojas", rating:4.8, ratingCount:90, phone:"+55 41 99965-0259", address:"Rua Teffé, 474 - Bom Retiro, Curitiba - PR"},
+  {name:"Penélope Moda Feminina Centro", city:"Porto Alegre", niche:"Lojas", rating:4.9, ratingCount:26, phone:"+55 51 3105-5655", address:"Av. Alberto Bins, 410 - Centro Histórico, Porto Alegre - RS"},
+  {name:"Duo Bella - Moda Feminina", city:"Porto Alegre", niche:"Lojas", rating:4.7, ratingCount:72, phone:"+55 51 99837-8718", address:"R. Vig. José Inácio, 423 - Centro Histórico, Porto Alegre - RS"},
+  {name:"AnnieStore Recife", city:"Recife", niche:"Lojas", rating:5.0, ratingCount:266, phone:"+55 81 92001-6319", address:"R. São Mateus, 73 - Iputinga, Recife - PE"},
+  {name:"Mais Linda Recife - Moda Feminina", city:"Recife", niche:"Lojas", rating:5.0, ratingCount:19, phone:"+55 81 99680-4633", address:"Rua Dona Anunciada, 168 - Graças, Recife - PE"},
+  {name:"Poás Moda", city:"Recife", niche:"Lojas", rating:5.0, ratingCount:105, phone:"+55 81 99602-0549", address:"R. Joaquim Nabuco, 747 - Derby, Recife - PE"},
+  {name:"Sallva Bar e Ristorante", city:"Brasília", niche:"Restaurantes", rating:4.8, ratingCount:20874, phone:"+55 61 3522-4352", address:"Pontão do Lago Sul - Asa Sul, Brasília - DF"},
+  {name:"Restaurante Universal", city:"Brasília", niche:"Restaurantes", rating:4.8, ratingCount:5080, phone:"+55 61 3443-2089", address:"ERL - Sul, 18 - Asa Sul, Brasília - DF"},
+  {name:"Nonna Augusta Trattoria", city:"Brasília", niche:"Restaurantes", rating:4.8, ratingCount:4165, phone:"+55 61 3964-5999", address:"Bloco E - Loja 69 - Asa Norte, Brasília - DF"},
+  {name:"Restaurante Terra & Mar", city:"Manaus", niche:"Restaurantes", rating:4.5, ratingCount:1362, phone:"+55 92 3019-4939", address:"Av. Mário Ypiranga, 1039 - Adrianópolis, Manaus - AM"},
+  {name:"Tambaqui de Banda", city:"Manaus", niche:"Restaurantes", rating:4.6, ratingCount:6231, phone:"+55 92 98554-9513", address:"R. José Clemente, 596 - Centro, Manaus - AM"},
+  {name:"Roseiral Restaurante", city:"Manaus", niche:"Restaurantes", rating:4.7, ratingCount:937, phone:"+55 92 98430-2080", address:"R. José Clemente, 600 - Centro, Manaus - AM"},
+  {name:"Ciao Ciao Cucina", city:"Goiânia", niche:"Restaurantes", rating:4.5, ratingCount:1014, phone:"+55 62 99829-3605", address:"Av. Portugal, 1148 - St. Marista, Goiânia - GO"},
+  {name:"Grá Bistrô | Grá Rooftop", city:"Goiânia", niche:"Restaurantes", rating:4.6, ratingCount:2659, phone:"+55 62 3181-0322", address:"Av. Portugal, 1148 - St. Marista, Goiânia - GO"},
+  {name:"Kabanas Restaurante e Bar", city:"Goiânia", niche:"Restaurantes", rating:4.4, ratingCount:1701, phone:"+55 62 3922-3393", address:"Av. Dep. Jamel Cecílio, 3300 - Vila Maria Jose, Goiânia - GO"},
+  {name:"Trattoria Carbone", city:"Florianópolis", niche:"Restaurantes", rating:4.9, ratingCount:8228, phone:"+55 48 3054-0731", address:"R. Felipe Schmidt, 869 - Centro, Florianópolis - SC"},
+  {name:"Ostradamus Restaurante", city:"Florianópolis", niche:"Restaurantes", rating:4.7, ratingCount:10009, phone:"+55 48 3337-5711", address:"Rod. Baldicero Filomeno, 7640 - Ribeirão da Ilha, Florianópolis - SC"},
+  {name:"Restaurante Rancho de Canoa", city:"Florianópolis", niche:"Restaurantes", rating:4.9, ratingCount:10702, phone:"+55 48 3232-3639", address:"R. Laurindo José de Souza, 188 - Barra da Lagoa, Florianópolis - SC"},
+  {name:"Vila Paraíso", city:"Campinas", niche:"Restaurantes", rating:4.5, ratingCount:5156, phone:"+55 19 3298-6913", address:"R. Dr. Heitor Penteado, 1716 - Joaquim Egídio, Campinas - SP"},
+  {name:"Digno Restaurante", city:"Campinas", niche:"Restaurantes", rating:4.9, ratingCount:484, phone:"+55 19 99950-5833", address:"R. Dr. Barbosa da Cunha, 822 - Jardim Guanabara, Campinas - SP"},
+  {name:"Bad Bone Bar e Restaurante", city:"Campinas", niche:"Restaurantes", rating:4.8, ratingCount:8047, phone:"+55 19 97163-0502", address:"Av. Dr. Heitor Penteado, 981 - Taquaral, Campinas - SP"},
+  {name:"Amazônia na Cuia", city:"Belém", niche:"Restaurantes", rating:4.8, ratingCount:11759, phone:"+55 91 98103-0036", address:"R. Domingos Marreiros, 851 - Umarizal, Belém - PA"},
+  {name:"Santa Grelha Belém", city:"Belém", niche:"Restaurantes", rating:4.8, ratingCount:433, phone:null, address:"Av. Centenário, 1052 - Val-de-Cans, Belém - PA"},
+  {name:"La Traviata", city:"Belém", niche:"Restaurantes", rating:4.8, ratingCount:4116, phone:"+55 91 3241-3337", address:"Av. Visc. de Souza Franco, 1454 - Nazaré, Belém - PA"},
+  {name:"Restaurante El Gitano", city:"Vitória", niche:"Restaurantes", rating:4.8, ratingCount:1847, phone:"+55 27 99248-9096", address:"Av. José Miranda Machado, 345 - Enseada do Suá, Vitória - ES"},
+  {name:"Tero Brasa e Vinho", city:"Vitória", niche:"Restaurantes", rating:4.8, ratingCount:3524, phone:"+55 27 99817-5253", address:"R. Eugênio Netto, 326 - Praia do Canto, Vitória - ES"},
+  {name:"Mahai", city:"Vitória", niche:"Restaurantes", rating:4.8, ratingCount:6482, phone:"+55 27 3100-0011", address:"R. Aleixo Netto, 577 - Praia do Canto, Vitória - ES"},
+  {name:"NAU Frutos do Mar RN", city:"Natal", niche:"Restaurantes", rating:4.7, ratingCount:9254, phone:"+55 84 3026-6333", address:"Av. Odilon Gomes de Lima, 1772 - Cidade Jardim, Natal - RN"},
+  {name:"Camarões Restaurante", city:"Natal", niche:"Restaurantes", rating:4.9, ratingCount:18150, phone:"+55 84 3209-2424", address:"Av. Eng. Roberto Freire, 3980 - Ponta Negra, Natal - RN"},
+  {name:"Mangai Natal", city:"Natal", niche:"Restaurantes", rating:4.7, ratingCount:13417, phone:"+55 84 3206-3344", address:"Av. Amintas Barros, 3300 - Lagoa Nova, Natal - RN"},
+  {name:"Maró Restaurante", city:"Maceió", niche:"Restaurantes", rating:4.8, ratingCount:2910, phone:"+55 82 99168-8472", address:"Av. Dr. Antônio Gouveia, 607 - Pajuçara, Maceió - AL"},
+  {name:"Cheiro da Terra", city:"Maceió", niche:"Restaurantes", rating:4.6, ratingCount:7012, phone:"+55 82 99997-0455", address:"Av. Dr. Antônio Gouveia, 33 - Pajuçara, Maceió - AL"},
+  {name:"Restaurante Janga Praia", city:"Maceió", niche:"Restaurantes", rating:4.9, ratingCount:15835, phone:"+55 82 98233-1030", address:"Av. Silvio Carlos Viana, 1731 - Ponta Verde, Maceió - AL"},
+  {name:"Restaurante Reserve Garden", city:"João Pessoa", niche:"Restaurantes", rating:4.4, ratingCount:2348, phone:"+55 83 98624-9441", address:"Av. Euzely Fabrício de Souza, 304 - Manaíra, João Pessoa - PB"},
+  {name:"Santa Grelha João Pessoa", city:"João Pessoa", niche:"Restaurantes", rating:4.7, ratingCount:1984, phone:"+55 83 3031-1150", address:"R. Manoel Arruda Cavalcante, 805 - Manaíra, João Pessoa - PB"},
+  {name:"Mangai JP Praia", city:"João Pessoa", niche:"Restaurantes", rating:4.7, ratingCount:22993, phone:"+55 83 3226-1615", address:"Av. Gen. Edson Ramalho, 696 - Manaíra, João Pessoa - PB"}
+];
+const REAL_CITIES = ["São Paulo","Rio de Janeiro","Belo Horizonte","Curitiba","Porto Alegre","Fortaleza","Recife","Salvador","Brasília","Manaus","Goiânia","Florianópolis","Campinas","Belém","Vitória","Natal","Maceió","João Pessoa","Aracaju","Cuiabá","Campo Grande","São Luís","Teresina","Porto Velho","Rio Branco","Macapá","Boa Vista","Palmas"];
+
+function normalize(s){ return (s||"").toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+const CITY_ALIASES = {
+  "sp":"sao paulo", "sampa":"sao paulo",
+  "rj":"rio de janeiro", "rio":"rio de janeiro",
+  "bh":"belo horizonte",
+  "poa":"porto alegre",
+  "ctba":"curitiba",
+  "sv":"salvador", "ssa":"salvador",
+  "for":"fortaleza",
+  "rec":"recife",
+  "bsb":"brasilia",
+  "floripa":"florianopolis",
+  "jp":"joao pessoa"
+};
+function normalizeCity(s){
+  const n = normalize(s).trim();
+  return CITY_ALIASES[n] || n;
+}
+
+function findRealCompanies(pais, cidade, nicho){
+  if(pais !== "Brasil" && pais !== "Todos") return [];
+  const cidadeRaw = normalizeCity(cidade);
+  const noCitySpecified = !cidade || normalize(cidade)==="regiao nao especificada";
+  return REAL_COMPANIES_RAW.filter(c=>{
+    const cityN = normalizeCity(c.city);
+    const cityMatch = noCitySpecified ? true : (cityN.includes(cidadeRaw) || cidadeRaw.includes(cityN));
+    const nicheMatch = nicho==="Todos" || c.niche === nicho;
+    return cityMatch && nicheMatch;
+  });
+}
+
+function realToCompany(r){
+  const ratingCount = r.ratingCount;
+  let score = 35;
+  score += Math.min(25, Math.round(ratingCount/200)); // presença comercial / avaliações públicas
+  score += Math.round((r.rating - 3) * 12); // qualidade percebida
+  score = Math.max(20, Math.min(96, score));
+  return {
+    id: 'real-'+r.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
+    name: r.name,
+    niche: r.niche,
+    city: r.city,
+    country: "Brasil",
+    size: ratingCount>2000 ? "Média" : "Pequena",
+    presenca: "Não verificado nesta fonte",
+    hasWebsite: false,
+    social: true,
+    status: "Novo",
+    real: true,
+    phone: r.phone,
+    rating: r.rating,
+    ratingCount: r.ratingCount,
+    address: r.address,
+    score
+  };
+}
+
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+function genCompanyName(nicho, cidade){
+  return `${rand(NAME_PARTS)} ${nicho.split(" ")[0]} ${rand(NAME_SUFFIX)}`;
+}
+
+function computeScore(company){
+  let s = 0;
+  if(company.presenca === "Sem website") s += 25;
+  else if(company.presenca === "Website desatualizado") s += 15;
+  else if(company.presenca === "Website incompleto") s += 20;
+  else if(company.presenca === "Website com baixa qualidade") s += 15;
+  s += randInt(0,15); // mobile
+  s += randInt(0,10); // presença comercial
+  s += randInt(0,10); // avaliações
+  s += randInt(0,5);  // redes sociais
+  return Math.min(100, s);
+}
+function scoreLabel(score){
+  if(score>=81) return {label:"Excelente oportunidade", cls:"score-excellent"};
+  if(score>=61) return {label:"Alta oportunidade", cls:"score-high"};
+  if(score>=31) return {label:"Média oportunidade", cls:"score-medium"};
+  return {label:"Baixa oportunidade", cls:"score-low"};
+}
+
+// ---------------- CONECTAR PLATAFORMAS ----------------
+const PLATFORMS = [
+  {id:"google", name:"Google Business / Maps", icon:"🗺️", scopes:["Perfil da empresa","Avaliações públicas","Categoria e localização"], real:true},
+  {id:"instagram", name:"Instagram", icon:"📷", scopes:["Conta comercial conectada","Informações públicas do perfil","Categoria do negócio"], real:false},
+  {id:"facebook", name:"Facebook", icon:"📘", scopes:["Páginas comerciais gerenciadas","Informações públicas da página"], real:false},
+  {id:"whatsapp", name:"WhatsApp Business", icon:"💬", scopes:["Perfil comercial","Preparo de mensagens (envio manual)"], real:false}
+];
+let connections = { google:true, instagram:false, facebook:false, whatsapp:false };
+
+function renderIntegrations(){
+  const grid = document.getElementById('integration-cards');
+  grid.innerHTML = '';
+  PLATFORMS.forEach(p=>{
+    const connected = connections[p.id];
+    const div = document.createElement('div');
+    div.className = 'company-card';
+    div.innerHTML = `
+      <div class="company-top">
+        <div class="company-logo" style="font-size:18px;">${p.icon}</div>
+        <div>
+          <div class="company-name">${p.name}</div>
+          <div class="company-meta">${p.real ? 'API oficial ativa nesta demo' : 'Requer OAuth (simulado nesta demo)'}</div>
+        </div>
+      </div>
+      <div class="status-badges">
+        ${p.scopes.map(s=>`<span class="badge">${s}</span>`).join('')}
+      </div>
+      <div class="score-row">
+        <span style="font-size:12.5px; color:${connected ? 'var(--green)' : 'var(--muted)'};">${connected ? '✓ Conectado' : '○ Não conectado'}</span>
+        <span style="font-size:10.5px; color:var(--muted2);">${connected ? 'Última sinc.: agora' : '—'}</span>
+      </div>
+      <div class="card-actions">
+        ${connected
+          ? `<button class="btn-mini" data-reconnect="${p.id}">Reconectar</button><button class="btn-mini" data-disconnect="${p.id}" style="color:var(--red);">Desconectar</button>`
+          : `<button class="btn-mini primary" data-connect="${p.id}">Conectar</button>`}
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+  grid.querySelectorAll('[data-connect]').forEach(b=> b.addEventListener('click', ()=> startOAuth(b.dataset.connect)));
+  grid.querySelectorAll('[data-reconnect]').forEach(b=> b.addEventListener('click', ()=> startOAuth(b.dataset.reconnect)));
+  grid.querySelectorAll('[data-disconnect]').forEach(b=> b.addEventListener('click', ()=>{
+    connections[b.dataset.disconnect] = false;
+    renderIntegrations();
+    syncFontesChips();
+  }));
+}
+
+function startOAuth(platformId){
+  const p = PLATFORMS.find(x=>x.id===platformId);
+  const overlay = document.getElementById('oauth-overlay');
+  const icon = document.getElementById('oauth-icon');
+  const title = document.getElementById('oauth-title');
+  const sub = document.getElementById('oauth-sub');
+  const fill = document.getElementById('oauth-progress');
+  icon.textContent = p.icon;
+  title.textContent = `Conectando ${p.name}`;
+  sub.textContent = `Simulando redirecionamento para o login oficial de ${p.name}...`;
+  fill.style.width = '10%';
+  overlay.classList.add('show');
+
+  setTimeout(()=>{ sub.textContent = `Autorizando permissões: ${p.scopes.join(', ')}`; fill.style.width='55%'; }, 700);
+  setTimeout(()=>{ sub.textContent = 'Testando integração...'; fill.style.width='85%'; }, 1500);
+  setTimeout(()=>{
+    fill.style.width='100%';
+    title.textContent = 'Conectado com sucesso (simulação)';
+    sub.textContent = `Em produção, o token de ${p.name} seria armazenado com segurança no backend.`;
+    connections[platformId] = true;
+    setTimeout(()=>{
+      overlay.classList.remove('show');
+      renderIntegrations();
+      syncFontesChips();
+    }, 900);
+  }, 2200);
+}
+
+document.getElementById('btn-assistente').addEventListener('click', ()=>{
+  const pending = PLATFORMS.filter(p=> !connections[p.id]);
+  if(pending.length===0){ alert('Todas as plataformas disponíveis já estão conectadas.'); return; }
+  alert(`Assistente de integração: encontrei ${pending.length} plataforma(s) para configurar (${pending.map(p=>p.name).join(', ')}). Vou abrir o fluxo oficial de cada uma, uma por vez.`);
+  let i = 0;
+  function next(){
+    if(i >= pending.length) return;
+    startOAuth(pending[i].id);
+    i++;
+    setTimeout(next, 3200);
+  }
+  next();
+});
+
+function syncFontesChips(){
+  const map = {"Instagram":"instagram","Facebook":"facebook"};
+  document.querySelectorAll('#chip-fontes .chip').forEach(chip=>{
+    const key = map[chip.dataset.val];
+    if(!key) return; // Google Maps / LinkedIn unaffected
+    if(connections[key]){
+      chip.removeAttribute('data-locked');
+      chip.querySelector('span').textContent = '● conectado';
+      chip.querySelector('span').style.color = 'var(--green)';
+    } else {
+      chip.dataset.locked = "1";
+      chip.classList.remove('selected');
+      chip.querySelector('span').textContent = '● requer integração';
+      chip.querySelector('span').style.color = 'var(--gold)';
+    }
+  });
+}
+renderIntegrations();
+syncFontesChips();
+
+// ---------------- MODO REAL (BACKEND) ----------------
+let backendUrl = '';
+let backendConnected = false;
+
+function setBackendStatus(msg, ok){
+  const el = document.getElementById('backend-status');
+  el.textContent = msg;
+  el.style.color = ok ? 'var(--green)' : 'var(--muted)';
+}
+
+async function testBackend(){
+  const input = document.getElementById('backend-url').value.trim().replace(/\/$/,'');
+  if(!input){ setBackendStatus('○ Informe uma URL antes de testar.', false); return; }
+  setBackendStatus('Testando conexão...', false);
+  try{
+    const resp = await fetch(input + '/api/health', { method:'GET' });
+    if(!resp.ok) throw new Error('status ' + resp.status);
+    const data = await resp.json();
+    backendUrl = input;
+    backendConnected = true;
+    const parts = [];
+    parts.push(data.googlePlacesConfigured ? 'Busca de empresas ✓' : 'Busca de empresas ✗ (sem chave)');
+    parts.push(data.pexelsConfigured ? 'Imagens de banco ✓' : 'Imagens de banco ✗ (sem chave)');
+    parts.push(data.openAiConfigured ? 'Textos com IA ✓' : 'Textos com IA: modo simulado (sem chave paga)');
+    setBackendStatus('✓ Backend conectado — ' + parts.join(' · ') + ' — busca real ativada.', true);
+    const pill = document.querySelector('.demo-pill');
+    pill.textContent = 'MODO REAL';
+    pill.style.color = 'var(--green)';
+    pill.style.borderColor = 'var(--green)';
+    pill.style.background = 'rgba(79,206,142,.12)';
+  }catch(e){
+    backendConnected = false;
+    setBackendStatus('✗ Não consegui conectar em "' + input + '". Confira a URL, o CORS (ALLOWED_ORIGIN) e se o servidor está no ar.', false);
+  }
+}
+document.getElementById('btn-test-backend').addEventListener('click', testBackend);
+
+// ---------------- PERFIL — salvar/limpar ----------------
+document.getElementById('btn-save-profile').addEventListener('click', ()=>{
+  userProfile.name = document.getElementById('profile-name').value.trim() || 'visitante';
+  userProfile.email = document.getElementById('profile-email').value.trim();
+  applyProfileToUI();
+  saveState();
+  const btn = document.getElementById('btn-save-profile');
+  const original = btn.textContent;
+  btn.textContent = 'Salvo ✓';
+  setTimeout(()=> btn.textContent = original, 1500);
+});
+document.getElementById('btn-clear-data').addEventListener('click', ()=>{
+  if(!confirm('Isso vai apagar todas as empresas buscadas, sites gerados e leads salvos desta conta (' + currentEmail + '). Não dá pra desfazer. Confirmar?')) return;
+  if(currentEmail) localStorage.removeItem(dataKeyFor(currentEmail));
+  allCompanies = []; projects = []; leads = [];
+  renderCompanies(); renderWebsites(); renderLeads(); updateDashboardStats();
+  alert('Dados locais apagados.');
+});
+document.getElementById('btn-logout')?.addEventListener('click', ()=>{
+  location.reload(); // a próxima entrada com o mesmo e-mail restaura tudo de novo
+});
+
+// ---------------- BUSCA EM LINGUAGEM NATURAL ----------------
+const NICHE_KEYWORDS = {
+  "Restaurantes": ["restaurante","restaurantes","italiano","japonês","comida"],
+  "Barbearias": ["barbearia","barbearias","barbeiro"],
+  "Salões de beleza": ["salão de beleza","salões de beleza","cabeleireiro","cabeleireira"],
+  "Clínicas": ["clínica","clínicas","médico","médica"],
+  "Academias": ["academia","academias","gym","fitness"],
+  "Lojas": ["loja","lojas","roupa","boutique"],
+  "Imobiliárias": ["imobiliária","imobiliárias","imóveis","corretor"],
+  "Escritórios": ["escritório","escritórios","contabilidade","contador"],
+  "Hotéis": ["hotel","hotéis","pousada"],
+  "Dentistas": ["dentista","dentistas","odontologia","odonto"],
+  "Fotógrafos": ["fotógrafo","fotógrafos","fotografia"],
+  "Mecânicas": ["mecânica","mecânicas","oficina","auto elétrico"],
+  "Empresas de tecnologia": ["tecnologia","software","ti ","startup"],
+  "Profissionais autônomos": ["advogado","advocacia","autônomo","consultor"]
+};
+let nlParsed = null;
+
+function parseNaturalSearch(text){
+  const t = normalize(text);
+  let niche = "Outros";
+  for(const [name, keywords] of Object.entries(NICHE_KEYWORDS)){
+    if(keywords.some(k => t.includes(normalize(k)))){ niche = name; break; }
+  }
+  // local: tenta pegar o que vem depois de " em "
+  let local = "";
+  const m = text.match(/\bem\s+(.+)$/i);
+  if(m) local = m[1].trim().replace(/[.?!]+$/,'');
+  return { niche, local };
+}
+
+document.getElementById('btn-nl-parse').addEventListener('click', ()=>{
+  const text = document.getElementById('nl-search').value.trim();
+  if(!text) return;
+  nlParsed = parseNaturalSearch(text);
+  document.getElementById('nl-summary').textContent = `Categoria: ${nlParsed.niche}${nlParsed.local ? ' · Local: ' + nlParsed.local : ' (local não identificado — ajuste manualmente abaixo)'}`;
+  document.getElementById('nl-confirm').classList.remove('hidden');
+});
+document.getElementById('btn-nl-cancel').addEventListener('click', ()=>{
+  document.getElementById('nl-confirm').classList.add('hidden');
+});
+document.getElementById('btn-nl-confirm').addEventListener('click', ()=>{
+  if(!nlParsed) return;
+  const nichoSelect = document.getElementById('f-nicho');
+  if([...nichoSelect.options].some(o=>o.value===nlParsed.niche)) nichoSelect.value = nlParsed.niche;
+  if(nlParsed.local) document.getElementById('f-cidade').value = nlParsed.local;
+  document.getElementById('nl-confirm').classList.add('hidden');
+  document.getElementById('btn-buscar').click();
+});
+
+document.querySelectorAll('[data-view]').forEach(el=>{
+  el.addEventListener('click', ()=> showView(el.dataset.view));
+});
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  document.getElementById('view-'+name).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.view===name));
+  currentView = name;
+  saveState(); // lembra em qual tela você estava, pra voltar exatamente aqui da próxima vez
+}
+
+// chips
+document.querySelectorAll('.chip-group').forEach(group=>{
+  group.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      if(chip.dataset.locked === "1"){
+        alert(`${chip.dataset.val}: essa fonte ainda não está conectada nesta demo.\n\nPara habilitar de verdade, é preciso configurar a integração oficial (Meta Graph API para Instagram/Facebook, ou API do LinkedIn), com autorização de uma conta comercial — não é possível "buscar qualquer pessoa" livremente nessas plataformas, apenas dados que a própria conta autorizou.\n\nVá em Configurações > Integrações para ver o status.`);
+        return;
+      }
+      chip.classList.toggle('selected');
+    });
+  });
+});
+
+// ---------------- BUSCA ----------------
+const loadingSteps = [
+  "Consultando Google Maps...",
+  "Analisando presença digital...",
+  "Identificando oportunidades...",
+  "Calculando pontuação..."
+];
+
+function computeRelevance(c, nicho, cidade){
+  let score = 40;
+  score += (c.niche === nicho) ? 30 : 0;
+  score += (normalize(c.city).includes(normalize(cidade)) || normalize(cidade).includes(normalize(c.city))) ? 20 : 0;
+  score += c.address ? 5 : 0;
+  score += (c.ratingCount || 0) > 100 ? 5 : 0;
+  return Math.max(0, Math.min(100, score));
+}
+
+// ---------------- RENDER EMPRESAS ----------------
+function updateResultsStats(){
+  const withScore = allCompanies.filter(c=>c.score!=null);
+  const withRel = allCompanies.filter(c=>c.relevance!=null);
+  const avg = arr => arr.length ? Math.round(arr.reduce((s,v)=>s+v,0)/arr.length) : null;
+  const avgScore = avg(withScore.map(c=>c.score));
+  const avgRel = avg(withRel.map(c=>c.relevance));
+  document.getElementById('rs-avg-score').textContent = avgScore!=null ? avgScore : '—';
+  document.getElementById('rs-avg-relevance').textContent = avgRel!=null ? avgRel : '—';
+  document.getElementById('rs-with-phone').textContent = allCompanies.filter(c=>c.phone).length;
+  document.getElementById('rs-no-website').textContent = allCompanies.filter(c=>!c.hasWebsite).length;
+}
+
+function getDisplayList(){
+  let list = [...allCompanies];
+  const filter = document.getElementById('rs-filter')?.value || 'all';
+  const sort = document.getElementById('rs-sort')?.value || 'relevance';
+  if(filter==='no-website') list = list.filter(c=>!c.hasWebsite);
+  if(filter==='with-phone') list = list.filter(c=>c.phone);
+  if(filter==='high-opportunity') list = list.filter(c=>c.score>=61);
+  if(sort==='relevance') list.sort((a,b)=> (b.relevance ?? -1) - (a.relevance ?? -1));
+  if(sort==='score') list.sort((a,b)=> (b.score ?? -1) - (a.score ?? -1));
+  if(sort==='rating') list.sort((a,b)=> (b.rating ?? -1) - (a.rating ?? -1));
+  if(sort==='name') list.sort((a,b)=> a.name.localeCompare(b.name));
+  return list;
+}
+document.getElementById('rs-apply').addEventListener('click', ()=> renderCompanies());
+
+function renderCompanies(){
+  const grid = document.getElementById('company-grid');
+  const empty = document.getElementById('empresas-empty');
+  const sub = document.getElementById('empresas-sub');
+  const statsBox = document.getElementById('results-stats');
+  grid.innerHTML = '';
+  const requested = window.__lastRequestedQtd || 0;
+
+  if(allCompanies.length===0){
+    empty.classList.remove('hidden');
+    statsBox.style.display = 'none';
+    empty.innerHTML = `<h3>Não encontramos empresas suficientes com esses critérios</h3>
+      <p>A fonte real (Google Places) não retornou resultados para "${window.__lastSearchNicho || ''} em ${window.__lastSearchCidade || ''}" nesta demo.</p>
+      <p style="margin-top:10px;"><strong style="color:var(--text);">Combinações com dado real disponível agora (modo demonstração):</strong><br>
+      São Paulo: todos os 15 nichos principais<br>
+      Lojas: também em Rio de Janeiro, Belo Horizonte, Curitiba, Porto Alegre, Recife, Salvador<br>
+      Restaurantes: também em Brasília, Manaus, Goiânia, Florianópolis, Campinas, Belém, Vitória, Natal, Maceió, João Pessoa<br>
+      Barbearias (Rio de Janeiro) · Salões de beleza (Belo Horizonte) · Clínicas (Curitiba) · Academias (Porto Alegre) · Imobiliárias (Fortaleza) · Dentistas (Recife)</p>
+      <p style="margin-top:10px;">Ou conecte o backend real em Configurações para busca em qualquer cidade e nicho do Brasil.</p>`;
+    sub.textContent = "0 empresas encontradas";
+    return;
+  }
+  empty.classList.add('hidden');
+  statsBox.style.display = '';
+  updateResultsStats();
+  const realCount = allCompanies.filter(c=>c.real).length;
+  const shortfall = requested > allCompanies.length;
+  let subText = `${allCompanies.length} empresa${allCompanies.length===1?'':'s'} encontrada${allCompanies.length===1?'':'s'}`;
+  if(shortfall) subText += ` (você pediu ${requested} — a fonte real não teve mais correspondências válidas; nada foi inventado para completar)`;
+  subText += realCount>0 ? ` · dados de fontes reais` : ` · nenhum dado real disponível para esta combinação nesta demo`;
+  sub.textContent = subText;
+  const displayList = getDisplayList();
+  displayList.forEach(c=>{
+    const sl = scoreLabel(c.score);
+    const div = document.createElement('div');
+    div.className = 'company-card';
+    const tag = c.live
+      ? '<span class="demo-tag" style="color:var(--green); background:rgba(79,206,142,.12);">AO VIVO · GOOGLE PLACES</span>'
+      : (c.real ? '<span class="demo-tag" style="color:var(--green); background:rgba(79,206,142,.12);">DADOS REAIS</span>' : '<span class="demo-tag">DEMO</span>');
+    const extraMeta = c.real
+      ? `<div class="company-meta">${c.address||''}</div><div class="company-meta">${c.rating?`⭐ ${c.rating} · ${(c.ratingCount||0).toLocaleString('pt-BR')} avaliações públicas (Google)`:''}</div>`
+      : '';
+    const phoneRow = c.real
+      ? (c.phone
+          ? `<a href="tel:${c.phone.replace(/\s+/g,'')}" style="text-decoration:none;"><div class="score-row" style="cursor:pointer;"><span style="font-size:13px; color:var(--text); font-weight:600;">📞 ${c.phone}</span><span style="font-size:11px; color:var(--accent2); font-weight:600;">Ligar agora →</span></div></a>`
+          : `<div class="score-row"><span style="font-size:12px; color:var(--muted);">📞 Telefone não disponível nesta fonte</span></div>`)
+      : '';
+    // Links sociais: só aparecem quando o backend realmente encontrou (nunca inventados)
+    const socials=[];
+    if(c.instagram) socials.push(`<a class="social-link" href="${c.instagram}" target="_blank" rel="noopener">📷 Instagram</a>`);
+    if(c.facebook) socials.push(`<a class="social-link" href="${c.facebook}" target="_blank" rel="noopener">📘 Facebook</a>`);
+    if(c.website) socials.push(`<a class="social-link" href="${c.website}" target="_blank" rel="noopener">🌐 Site</a>`);
+    if(c.real){
+      const maps=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((c.name||'')+' '+(c.city||''))}`;
+      socials.push(`<a class="social-link" href="${maps}" target="_blank" rel="noopener">📍 Google Maps</a>`);
+    }
+    div.innerHTML = `
+      <div class="company-top">
+        <div class="company-logo">${c.name.charAt(0)}</div>
+        <div>
+          <div class="company-name">${c.name}${tag}</div>
+          <div class="company-meta">${c.niche} · ${c.city}, ${c.country}</div>
+        </div>
+      </div>
+      ${extraMeta}
+      ${phoneRow}
+      ${socials.length ? `<div class="social-links">${socials.join('')}</div>` : ''}
+      <div class="score-row">
+        <span style="font-size:11.5px; color:var(--muted);">Relevância: <strong style="color:var(--text);">${c.relevance ?? '—'}${c.relevance!=null?'/100':''}</strong></span>
+        <span style="font-size:10.5px; color:var(--muted2);">Fonte: ${c.source || 'Google Places'}</span>
+      </div>
+      <div class="score-row">
+        <div><span class="score-num">${c.score}</span><span style="color:var(--muted); font-size:11px;">/100</span></div>
+        <span class="score-label ${sl.cls}">${sl.label}</span>
+      </div>
+      <div class="status-badges">
+        <span class="badge">${c.presenca}</span>
+        <span class="badge">${c.size}</span>
+        ${c.social ? '<span class="badge">Redes ativas</span>' : ''}
+      </div>
+      <div class="card-actions">
+        <button class="btn-mini primary" data-analyze="${c.id}">Analisar</button>
+        ${c.phone ? `<button class="btn-mini" data-contact="${c.id}" style="color:var(--green);">💬 Preparar contato</button>` : ''}
+        <button class="btn-mini" data-lead="${c.id}">+ Lead</button>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+  grid.querySelectorAll('[data-analyze]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openAnalysis(btn.dataset.analyze));
+  });
+  grid.querySelectorAll('[data-lead]').forEach(btn=>{
+    btn.addEventListener('click', ()=> addLead(btn.dataset.lead, "Novo"));
+  });
+  grid.querySelectorAll('[data-contact]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openContactPrep(btn.dataset.contact));
+  });
+}
+
+// ---------------- ANÁLISE (IA real via backend, com fallback simulado) ----------------
+// ---------------- PRÉ-BUSCA DE IMAGENS (dispara já na análise, cacheia pra geração) ----------------
+function prefetchSiteImages(c){
+  if(!backendConnected || !backendUrl) return null;
+  if(c.__imagePrefetchPromise) return c.__imagePrefetchPromise; // já em andamento ou concluída, reaproveita
+
+  const profile = NICHE_PROFILES[c.niche] || NICHE_PROFILES["Outros"];
+  const searchImages = (query, count) =>
+    fetch(`${backendUrl}/api/images/search?query=${encodeURIComponent(query)}&count=${count}`)
+      .then(r=> r.ok ? r.json() : { images: [] })
+      .catch(()=> ({ images: [] }));
+
+  // Prioridade máxima: fotos REAIS do perfil da própria empresa no Google (se existirem).
+  // Só busca imagem de banco (Pexels) pro que sobrar faltando.
+  const ownPhotos = (c.photos || []).map(url => ({ url, photographer: null, ownPhoto: true }));
+
+  const baseServices = profile.services;
+  const promise = Promise.all([
+    ownPhotos.length ? Promise.resolve({images:[]}) : searchImages(`${c.niche} ${c.city} fachada`, 2),
+    ownPhotos.length ? Promise.resolve({images:[]}) : searchImages(`${c.niche} ambiente interior`, 3),
+    ownPhotos.length >= 6 ? Promise.resolve({images:[]}) : searchImages(`${c.niche} negócio local`, 6),
+    Promise.all(baseServices.map(s => searchImages(`${s} ${c.niche}`, 1))),
+    profile.team ? searchImages(`equipe profissional ${c.niche}`, 3) : Promise.resolve({images:[]}),
+  ]).then(([heroRes, aboutRes, galleryRes, serviceResArr, teamRes])=>{
+    const stockPool = [...(heroRes.images||[]), ...(aboutRes.images||[]), ...(galleryRes.images||[])];
+    const allPhotos = [...ownPhotos, ...stockPool]; // fotos reais da empresa primeiro, banco de imagem só de reforço
+    c.aiImages = {
+      hero: allPhotos[0] || null,
+      about: allPhotos[1] || allPhotos[0] || null,
+      gallery: allPhotos.slice(2, 6),
+      services: serviceResArr.map(r => r.images?.[0] || null), // serviço continua usando banco (é genérico por natureza)
+      team: (teamRes.images || []).slice(0,3), // fotos de "quem são eles" — só buscado quando o nicho tem equipe
+    };
+    c.__imagesReady = true;
+    c.__ownPhotosUsed = ownPhotos.length > 0;
+    return c.aiImages;
+  }).catch(()=> null);
+
+  c.__imagePrefetchPromise = promise;
+  return promise;
+}
+
+async function openAnalysis(id){
+  const c = allCompanies.find(x=>x.id===id);
+  currentAnalyzing = c;
+  const profile = NICHE_PROFILES[c.niche] || NICHE_PROFILES["Outros"];
+  document.getElementById('an-title').textContent = c.name;
+  document.getElementById('an-sub').textContent = c.real
+    ? `${c.niche} · ${c.address}${c.phone ? ' · 📞 ' + c.phone : ''} · Oportunidade ${c.score}/100 · Fonte: Google Places${c.live ? ' (ao vivo)' : ' (dados reais)'}`
+    : `${c.niche} · ${c.city}, ${c.country} · Oportunidade ${c.score}/100`;
+
+  const body = document.getElementById('an-body');
+  document.getElementById('analysis-overlay').classList.add('show');
+
+  // Dispara a busca de imagens JÁ na análise, em paralelo, sem esperar —
+  // assim quando você clicar em "Gerar Website" elas já estarão prontas (ou quase).
+  prefetchSiteImages(c);
+
+  // ---- MODO REAL: backend conectado -> análise real com OpenAI ----
+  if(backendConnected && backendUrl){
+    body.innerHTML = `<div class="loading-box show"><div class="loading-step">Analisando empresa com IA (OpenAI) · buscando imagens em segundo plano...</div><div class="progress-track"><div class="progress-fill" style="width:60%;"></div></div></div>`;
+    try{
+      const resp = await fetch(backendUrl + '/api/ai/analyze-company', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          name:c.name, niche:c.niche, city:c.city, country:c.country,
+          address:c.address, rating:c.rating, ratingCount:c.ratingCount, hasWebsite:c.hasWebsite
+        })
+      });
+      if(!resp.ok) throw new Error('status ' + resp.status);
+      const data = await resp.json();
+      const a = data.analysis;
+      body.innerHTML = `
+        <div class="analysis-section"><div class="analysis-label">Resumo</div><div class="analysis-text">${a.resumo}</div></div>
+        <div class="analysis-section"><div class="analysis-label">Público-alvo</div><div class="analysis-text">${a.publicoAlvo}</div></div>
+        <div class="analysis-section"><div class="analysis-label">Principais serviços</div><div class="tag-row">${(a.principaisServicos||[]).map(s=>`<span class="tag">${s}</span>`).join('')}</div></div>
+        <div class="analysis-section"><div class="analysis-label">Problemas identificados</div><div class="analysis-text">${(a.problemasIdentificados||[]).join(' ')}</div></div>
+        <div class="analysis-section"><div class="analysis-label">Estilo visual recomendado</div><div class="analysis-text">${a.estiloVisualRecomendado}</div>
+          <div class="swatch-row">${(a.coresRecomendadas||[]).map(p=>`<div class="swatch" style="background:${p}"></div>`).join('')}</div>
+        </div>
+        <div class="analysis-section"><div class="analysis-label">CTA recomendado</div><div class="analysis-text">${a.ctaRecomendado}</div></div>
+      `;
+      currentAnalyzing.aiAnalysis = a;
+      return;
+    }catch(e){
+      body.innerHTML = `<div class="analysis-text" style="color:var(--red);">Não consegui gerar a análise real (${e.message}). Mostrando versão simulada abaixo.</div>`;
+      await new Promise(r=>setTimeout(r,700));
+    }
+  }
+
+  // ---- MODO DEMO: análise simulada ----
+  const problems = [];
+  if(!c.hasWebsite) problems.push("Ausência de website próprio, dependendo apenas de redes sociais ou boca a boca.");
+  if(c.presenca==="Website desatualizado") problems.push("Site existente parece desatualizado visualmente e sem otimização mobile.");
+  if(!c.social) problems.push("Baixa presença ativa em redes sociais públicas.");
+  if(problems.length===0) problems.push("Presença digital já é razoável, mas ainda há espaço para profissionalização visual.");
+
+  body.innerHTML = `
+    <div class="analysis-section"><div class="analysis-label">Resumo</div><div class="analysis-text">${c.name} atua no segmento de ${c.niche.toLowerCase()} em ${c.city}, classificada como empresa de porte ${c.size.toLowerCase()}. Estimativa baseada em dados públicos — não afirma necessidade absoluta de site novo.</div></div>
+    <div class="analysis-section"><div class="analysis-label">Público-alvo</div><div class="analysis-text">Consumidores locais em ${c.city} que buscam ${c.niche.toLowerCase()} com atendimento próximo e confiável.</div></div>
+    <div class="analysis-section"><div class="analysis-label">Principais serviços</div><div class="tag-row">${profile.services.map(s=>`<span class="tag">${s}</span>`).join('')}</div></div>
+    <div class="analysis-section"><div class="analysis-label">Problemas identificados</div><div class="analysis-text">${problems.join(" ")}</div></div>
+    <div class="analysis-section"><div class="analysis-label">Estilo visual recomendado</div><div class="analysis-text">${profile.style}</div>
+      <div class="swatch-row">${profile.palette.map(p=>`<div class="swatch" style="background:${p}"></div>`).join('')}</div>
+    </div>
+    <div class="analysis-section"><div class="analysis-label">CTA recomendado</div><div class="analysis-text">"Fale conosco" / "Agende agora"</div></div>
+  `;
+}
+document.getElementById('close-analysis').addEventListener('click', ()=> document.getElementById('analysis-overlay').classList.remove('show'));
+document.getElementById('btn-gerar-do-modal').addEventListener('click', ()=>{
+  document.getElementById('analysis-overlay').classList.remove('show');
+  generateWebsite(currentAnalyzing);
+});
+
+// ---------------- GERAR SITE (MOCK IA) ----------------
+const siteSteps = ["Analisando empresa...","Planejando estrutura do site...","Selecionando imagens...","Gerando textos...","Montando website..."];
+async function generateWebsite(c){
+  document.getElementById('site-title').textContent = `Gerando site para ${c.name}`;
+  document.getElementById('site-loading').classList.remove('hidden');
+  document.getElementById('site-loading').classList.add('show');
+  document.getElementById('site-preview-wrap').classList.add('hidden');
+  document.getElementById('site-overlay').classList.add('show');
+
+  const fill = document.getElementById('site-progress');
+  const stepEl = document.getElementById('site-loading-step');
+  fill.style.width='6%';
+
+  // ---- MODO REAL: backend conectado -> textos (OpenAI) + imagens (Pexels, já pré-buscadas na análise) ----
+  if(backendConnected && backendUrl){
+    const alreadyReady = c.__imagesReady;
+    stepEl.textContent = alreadyReady
+      ? 'Imagens já prontas (buscadas durante a análise) — gerando textos com IA...'
+      : 'Gerando textos com IA e finalizando busca de imagens...';
+    fill.style.width='20%';
+
+    const textPromise = fetch(backendUrl + '/api/ai/generate-website', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ company: c, analysis: c.aiAnalysis || {} })
+    }).then(r=> r.ok ? r.json() : Promise.reject(new Error('status ' + r.status)));
+
+    // Reaproveita a pré-busca disparada em "Analisar"; se por algum motivo não
+    // rodou ainda, dispara agora (nunca fica sem imagem por falta da pré-busca).
+    const imagesPromise = prefetchSiteImages(c) || Promise.resolve(null);
+
+    try{
+      fill.style.width='55%';
+      const [siteData] = await Promise.all([textPromise, imagesPromise]);
+      c.aiSite = siteData.site;
+
+      const totalFound = c.aiImages
+        ? [c.aiImages.hero, c.aiImages.about, ...(c.aiImages.gallery||[]), ...(c.aiImages.services||[]), ...(c.aiImages.team||[])].filter(Boolean).length
+        : 0;
+      fill.style.width='100%';
+      stepEl.textContent = totalFound ? `Site pronto — ${totalFound} imagens reais já aplicadas!` : 'Site pronto!';
+      setTimeout(()=> renderSitePreview(c), 400);
+    }catch(err){
+      stepEl.textContent = 'Falha na geração real (' + err.message + '). Usando modelo simulado...';
+      fill.style.width='60%';
+      setTimeout(()=> renderSitePreview(c), 800);
+    }
+    return;
+  }
+
+  // ---- MODO DEMO: textos simulados ----
+  let i=0;
+  const interval = setInterval(()=>{
+    i++;
+    fill.style.width = Math.min(96, 12 + i*20) + '%';
+    if(i < siteSteps.length) stepEl.textContent = siteSteps[i];
+    if(i >= siteSteps.length){
+      clearInterval(interval);
+      fill.style.width='100%';
+      setTimeout(()=> renderSitePreview(c), 400);
+    }
+  }, 600);
+}
+
+// Biblioteca de fotos reais e livres para uso comercial (Lorem Picsum -> acervo Unsplash),
+// selecionadas por semente para variar por empresa mas manter consistência visual.
+// Gera uma imagem de demonstração 100% local (SVG com gradiente + padrão),
+// sem depender de nenhum serviço externo — nunca falha por causa de rede/firewall.
+// A cor varia por seed, então fotos diferentes ficam visualmente diferentes.
+function img(seed, w, h){
+  let hash = 0;
+  for(let i=0; i<seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  const hue1 = hash % 360;
+  const hue2 = (hue1 + 40 + (hash % 60)) % 360;
+  const c1 = `hsl(${hue1}, 45%, 22%)`;
+  const c2 = `hsl(${hue2}, 50%, 32%)`;
+  const patternId = 'p' + (hash % 100000);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <defs>
+      <linearGradient id="g${patternId}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${c1}"/>
+        <stop offset="100%" stop-color="${c2}"/>
+      </linearGradient>
+      <pattern id="${patternId}" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(${hash % 90})">
+        <rect width="40" height="40" fill="transparent"/>
+        <circle cx="20" cy="20" r="1.6" fill="rgba(255,255,255,0.12)"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g${patternId})"/>
+    <rect width="100%" height="100%" fill="url(#${patternId})"/>
+  </svg>`;
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
+// Fallback garantido: se a foto externa não carregar (rede lenta, bloqueio, etc.),
+// mostra um retângulo colorido com o nome da seção, pra sempre dar uma noção visual
+// de como o site vai ficar — nunca um ícone de imagem quebrada.
+function placeholderDataUri(label, w, h, bg){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <rect width="100%" height="100%" fill="${bg||'#2a2d3a'}"/>
+    <text x="50%" y="50%" font-family="sans-serif" font-size="${Math.round(w/18)}" fill="#ffffffaa" text-anchor="middle" dominant-baseline="middle">${label}</text>
+  </svg>`;
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
+// ---------------- IMAGENS EDITÁVEIS DO SITE GERADO ----------------
+const siteImageState = {}; // key -> {variant, w, h, isHero}
+
+function siteImgWrap(key, src, alt, w, h, extraClass, isHero){
+  siteImageState[key] = { variant: 0, w, h, isHero: !!isHero };
+  const fallback = placeholderDataUri(alt || 'imagem', w, h);
+  return `<div class="img-edit ${extraClass||''}" data-img-key="${key}">
+    <img src="${src}" alt="${alt}" loading="eager" onerror="this.onerror=null; this.src='${fallback}';">
+    <div class="img-edit-overlay">
+      <button type="button" class="img-edit-btn" onclick="regenerateSiteImage('${key}')">🔄 Nova imagem</button>
+      <button type="button" class="img-edit-btn" onclick="triggerSiteImageUpload('${key}')">📤 Minha foto</button>
+    </div>
+  </div>`;
+}
+
+function heroImgTag(key, src, w, h, alt){
+  siteImageState[key] = { variant: 0, w, h, isHero: true };
+  const fallback = placeholderDataUri(alt || 'capa', w, h, '#1a1c26');
+  return `<img class="site-hero-bg" src="${src}" alt="${alt||''}" loading="eager" onerror="this.onerror=null; this.src='${fallback}';">`;
+}
+
+function regenerateSiteImage(key){
+  const st = siteImageState[key];
+  if(!st) return;
+  st.variant++;
+  const newSrc = img(key + '-v' + st.variant, st.w, st.h);
+  applySiteImage(key, newSrc);
+}
+
+function triggerSiteImageUpload(key){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=> applySiteImage(key, reader.result);
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function applySiteImage(key, src){
+  const st = siteImageState[key];
+  if(st && st.isHero){
+    const heroImgEl = document.querySelector(`.site-hero[data-hero-key="${key}"] img.site-hero-bg`);
+    if(heroImgEl) heroImgEl.src = src;
+  } else {
+    const wrap = document.querySelector(`[data-img-key="${key}"] img`);
+    if(wrap) wrap.src = src;
+  }
+}
+
+const FAQ_BANK = [
+  {q:"Como faço para agendar?", a:"É simples: entre em contato pelo formulário, telefone ou WhatsApp e confirmamos o melhor horário para você."},
+  {q:"Vocês atendem toda a região?", a:"Sim, atendemos clientes de toda a cidade e região, presencialmente ou conforme a modalidade do serviço."},
+  {q:"Quais formas de pagamento são aceitas?", a:"Aceitamos as principais formas de pagamento, incluindo cartão, Pix e transferência."},
+  {q:"Preciso agendar com antecedência?", a:"Recomendamos agendar com alguns dias de antecedência para garantir o melhor horário disponível."}
+];
+const TESTI_NAMES = ["Marcos Almeida","Juliana Costa","Renato Silva","Patrícia Souza"];
+
+// ---------------- MODO EDIÇÃO / MODO FINAL ----------------
+// ---------------- FORMULÁRIO DE CONTATO DO SITE GERADO ----------------
+function handleSiteContactForm(event){
+  event.preventDefault();
+  const form = event.target;
+  const nome = form.nome.value.trim();
+  const email = form.email.value.trim();
+  const mensagem = form.mensagem.value.trim();
+  const c = window.__currentSiteCompany;
+
+  const fullMessage = `Nova mensagem pelo site de ${c?.name || 'sua empresa'}:\n\nNome: ${nome}\nE-mail: ${email}\nMensagem: ${mensagem}`;
+
+  if(c?.real && c?.phone){
+    const digits = c.phone.replace(/[^\d]/g,'');
+    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(fullMessage)}`, '_blank');
+  } else {
+    alert('Mensagem pronta:\n\n' + fullMessage + '\n\n(Sem telefone real cadastrado nesta empresa para encaminhar automaticamente — em produção isso cairia num e-mail ou CRM da empresa.)');
+  }
+  form.reset();
+  return false;
+}
+
+function setSiteMode(editMode){
+  const wrap = document.getElementById('site-preview-wrap');
+  const editBtn = document.getElementById('mode-edit-btn');
+  const finalBtn = document.getElementById('mode-final-btn');
+  const hint = document.getElementById('site-mode-hint');
+  wrap.classList.toggle('locked', !editMode);
+  editBtn.classList.toggle('active', editMode);
+  finalBtn.classList.toggle('active', !editMode);
+  wrap.querySelectorAll('.editable').forEach(el=> el.setAttribute('contenteditable', editMode ? 'true' : 'false'));
+  hint.textContent = editMode
+    ? '💡 Clique em qualquer texto pra editar. Passe o mouse sobre uma imagem pra trocar por outra ou enviar a sua própria foto.'
+    : '✓ Modo final: links do menu, botões e formulário funcionam de verdade. Nada é editável aqui — clique em "Modo edição" pra voltar a ajustar.';
+}
+
+// ---------------- VARIAÇÃO DE TEMPLATE (formato garantido por categoria de negócio) ----------------
+// Cada categoria tem um formato de capa + cantos FIXO e diferente das outras —
+// não é por sorteio: uma clínica nunca cai no mesmo formato de um restaurante.
+// Cada categoria tem uma FAMÍLIA de 2 opções de capa e 2 de cantos —
+// garante que a categoria tem uma "cara" (ex: saúde é sempre sério), mas
+// duas empresas da mesma categoria (duas clínicas) caem em combinações diferentes.
+const CATEGORY_FAMILIES = {
+  alimentacao:   { heroes:['tpl-center','tpl-minimal'], shapes:['tpl-round','tpl-soft'] },
+  saude:         { heroes:['tpl-split','tpl-minimal'],  shapes:['tpl-sharp','tpl-soft'] },
+  beleza:        { heroes:['tpl-minimal','tpl-center'], shapes:['tpl-round','tpl-soft'] },
+  corporativo:   { heroes:['tpl-split','tpl-center'],   shapes:['tpl-sharp','tpl-soft'] },
+  varejo:        { heroes:['tpl-center','tpl-split'],   shapes:['tpl-soft','tpl-round'] },
+  tecnico:       { heroes:['tpl-minimal','tpl-split'],  shapes:['tpl-sharp','tpl-round'] },
+  tecnologia:    { heroes:['tpl-split','tpl-minimal'],  shapes:['tpl-round','tpl-sharp'] },
+  hospitalidade: { heroes:['tpl-minimal','tpl-center'], shapes:['tpl-round','tpl-sharp'] },
+  educacao:      { heroes:['tpl-center','tpl-minimal'], shapes:['tpl-sharp','tpl-soft'] },
+  criativos:     { heroes:['tpl-minimal','tpl-split'],  shapes:['tpl-soft','tpl-round'] },
+  imobiliario:   { heroes:['tpl-split','tpl-center'],   shapes:['tpl-soft','tpl-sharp'] },
+};
+const NICHE_TO_CATEGORY = {
+  "Restaurantes":"alimentacao","Pizzarias":"alimentacao","Hamburguerias":"alimentacao","Cafeterias":"alimentacao",
+  "Padarias":"alimentacao","Lanchonetes":"alimentacao","Bares":"alimentacao","Docerias":"alimentacao",
+  "Sorveterias":"alimentacao","Buffets":"alimentacao","Food trucks":"alimentacao",
+  "Clínicas":"saude","Dentistas":"saude","Laboratórios":"saude","Fisioterapia":"saude","Psicologia":"saude",
+  "Veterinários":"saude","Farmácias":"saude","Pet shops":"saude","Pet care":"saude",
+  "Barbearias":"beleza","Salões de beleza":"beleza","Estúdios de unhas":"beleza","Academias":"beleza","Crossfit":"beleza",
+  "Escritórios":"corporativo","Escritórios de contabilidade":"corporativo","Advocacia":"corporativo","Consultoria":"corporativo",
+  "Seguros":"corporativo","Bancos/serviços financeiros":"corporativo","Engenharia":"corporativo","Arquitetura":"corporativo",
+  "Profissionais autônomos":"corporativo",
+  "Lojas":"varejo","Lojas de roupas":"varejo","Lojas de calçados":"varejo","Lojas de móveis":"varejo","Lojas de decoração":"varejo",
+  "Lojas de eletrônicos":"varejo","Lojas de celulares":"varejo","Supermercados":"varejo","Mercados":"varejo","Joalherias":"varejo",
+  "Óticas":"varejo","Lojas de presentes":"varejo","Floriculturas":"varejo",
+  "Mecânicas":"tecnico","Autopeças":"tecnico","Funilaria e pintura":"tecnico","Auto elétrico":"tecnico","Lava-jato":"tecnico",
+  "Locadoras de veículos":"tecnico","Transportadoras":"tecnico","Logística":"tecnico","Materiais de construção":"tecnico",
+  "Marcenarias":"tecnico","Serralherias":"tecnico","Empresas de limpeza":"tecnico","Dedetizadoras":"tecnico",
+  "Segurança eletrônica":"tecnico","Instalação elétrica":"tecnico","Encanadores":"tecnico","Pintores":"tecnico",
+  "Reformas":"tecnico","Manutenção":"tecnico",
+  "Empresas de tecnologia":"tecnologia","Tecnologia":"tecnologia","Software":"tecnologia",
+  "Hotéis":"hospitalidade","Pousadas":"hospitalidade","Hostels":"hospitalidade","Agências de turismo":"hospitalidade",
+  "Escolas":"educacao","Cursos":"educacao","Creches":"educacao",
+  "Fotógrafos":"criativos","Videomakers":"criativos","Gráficas":"criativos","Agências de marketing":"criativos","Agências de publicidade":"criativos",
+  "Imobiliárias":"imobiliario","Construtoras":"imobiliario","Energia solar":"imobiliario",
+};
+
+function hashSeed(str){
+  let h = 0;
+  for(let i=0; i<str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+// Rotaciona a paleta base do nicho pra cada empresa ter sua própria cor,
+// mantendo a identidade da categoria (não vira uma cor aleatória qualquer).
+function hexToHsl(hex){
+  hex = hex.replace('#','');
+  const r=parseInt(hex.substring(0,2),16)/255, g=parseInt(hex.substring(2,4),16)/255, b=parseInt(hex.substring(4,6),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b);
+  let h=0,s=0,l=(max+min)/2;
+  if(max!==min){
+    const d=max-min;
+    s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    if(max===r) h=((g-b)/d + (g<b?6:0));
+    else if(max===g) h=(b-r)/d+2;
+    else h=(r-g)/d+4;
+    h*=60;
+  }
+  return [h,s,l];
+}
+function hslToHex(h,s,l){
+  h=((h%360)+360)%360; 
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let r,g,b;
+  if(h<60){r=c;g=x;b=0} else if(h<120){r=x;g=c;b=0} else if(h<180){r=0;g=c;b=x}
+  else if(h<240){r=0;g=x;b=c} else if(h<300){r=x;g=0;b=c} else {r=c;g=0;b=x}
+  const toHex=v=>Math.round((v+m)*255).toString(16).padStart(2,'0');
+  return '#'+toHex(r)+toHex(g)+toHex(b);
+}
+function companyPalette(basePalette, seed){
+  const hueShift = (seed % 41) - 20; // desvio de -20 a +20 graus, sutil mas perceptível
+  return basePalette.map((hex,idx)=>{
+    if(idx===2) return hex; // mantém a cor de texto/fundo claro como está, só gira as cores de identidade
+    const [h,s,l] = hexToHsl(hex);
+    return hslToHex(h+hueShift, s, l);
+  });
+}
+
+function siteVariant(c){
+  const category = NICHE_TO_CATEGORY[c.niche] || 'varejo';
+  const family = CATEGORY_FAMILIES[category] || CATEGORY_FAMILIES.varejo;
+  const seed = hashSeed((c.name||'') + (c.niche||''));
+  const sectionOrders = [
+    ['about','services','gallery'],
+    ['services','about','gallery'],
+    ['gallery','about','services'],
+  ];
+  return {
+    hero: family.heroes[seed % family.heroes.length],
+    shape: family.shapes[Math.floor(seed/7) % family.shapes.length],
+    order: sectionOrders[Math.floor(seed/13) % sectionOrders.length],
+    seed,
+  };
+}
+
+function renderSitePreview(c){
+  window.__currentSiteCompany = c;
+  const baseProfile = NICHE_PROFILES[c.niche] || NICHE_PROFILES["Outros"];
+  const variant = siteVariant(c);
+  // Cópia local — nunca mutar NICHE_PROFILES, que é compartilhado por todas as empresas do nicho
+  const profile = { ...baseProfile, palette: companyPalette(baseProfile.palette, variant.seed) };
+  const ai = c.aiSite || null; // textos reais vindos do backend, quando disponíveis
+  document.getElementById('site-loading').classList.remove('show');
+  document.getElementById('site-loading').classList.add('hidden');
+  document.getElementById('site-preview-wrap').classList.remove('hidden');
+  if(ai) document.getElementById('site-title').textContent = `${c.name} — gerado com IA real`;
+
+  const slug = c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  const realImages = c.aiImages || null; // imagens reais buscadas no Pexels via backend, quando disponíveis
+  const heroImg = realImages?.hero?.url || img(slug+'-hero', 1200, 700);
+  const aboutImg = realImages?.about?.url || img(slug+'-about', 700, 500);
+  const galleryImgs = realImages?.gallery?.length
+    ? [0,1,2,3].map(n => realImages.gallery[n]?.url || img(slug+'-g'+n, 500, 340))
+    : [1,2,3,4].map(n=> img(slug+'-g'+n, 500, 340));
+  const serviceList = (ai?.services?.length ? ai.services : profile.services.map(s=>({title:s, description:'Qualidade e atenção em cada detalhe.'})));
+  const serviceImgs = serviceList.map((s,idx)=> realImages?.services?.[idx]?.url || img(slug+'-svc'+idx, 500, 340));
+  const teamImgs = realImages?.team?.length
+    ? [0,1,2].map(n => realImages.team[n]?.url || img(slug+'-team'+n, 300, 300))
+    : [1,2,3].map(n=> img(slug+'-team'+n, 300, 300));
+  const teamRoles = profile.teamRoles || ['Fundador(a)', 'Atendimento', 'Especialista'];
+  const testiImgs = [1,2].map(n=> img(slug+'-person'+n, 100, 100));
+  const faqList = (ai?.faq?.length ? ai.faq.map(f=>({q:f.question, a:f.answer})) : FAQ_BANK);
+
+  const phoneDigits = (c.real && c.phone) ? c.phone.replace(/[^\d]/g,'') : '';
+  const waLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent('Olá! Vim pelo site e gostaria de mais informações.')}` : '#site-contato';
+  const telLink = phoneDigits ? `tel:${c.phone.replace(/\s+/g,'')}` : '#site-contato';
+
+  const shell = document.getElementById('site-shell');
+  shell.className = `site-shell ${variant.hero} ${variant.shape}`;
+
+  const aboutSection = `
+    <div class="site-section" id="site-sobre">
+      <span class="site-eyebrow-sm">Sobre nós</span>
+      <div class="site-about-grid">
+        <div>
+          <h4>${ai?.aboutTitle || 'Quem somos'}</h4>
+          <p class="editable sec-desc" contenteditable="true" style="max-width:100%;">${ai?.aboutText || `Somos ${c.name}, referência em ${c.niche.toLowerCase()} em ${c.city}. Nosso compromisso é oferecer um atendimento próximo, ${profile.style.toLowerCase()}, com atenção aos detalhes em cada visita.`}</p>
+        </div>
+        ${siteImgWrap(slug+'-about', aboutImg, `Ambiente de ${c.name}`, 700, 500)}
+      </div>
+    </div>`;
+
+  const servicesSection = `
+    <div class="site-section alt" id="site-servicos">
+      <span class="site-eyebrow-sm">O que oferecemos</span>
+      <h4>Serviços</h4>
+      <p class="sec-desc">Conheça as principais soluções pensadas para você.</p>
+      <div class="site-grid3">
+        ${serviceList.map((s,idx)=>`
+          <div class="site-mini-card">
+            ${siteImgWrap(slug+'-svc'+idx, serviceImgs[idx], s.title, 500, 340)}
+            <div class="smc-body">
+              <strong class="editable" contenteditable="true">${s.title}</strong>
+              <span class="editable" contenteditable="true">${s.description}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  const gallerySection = `
+    <div class="site-section" id="site-galeria">
+      <span class="site-eyebrow-sm">Galeria</span>
+      <h4>Nosso espaço</h4>
+      <div class="site-gallery">
+        ${galleryImgs.map((g,idx)=> siteImgWrap(slug+'-g'+idx, g, `Foto de ${c.name}`, 500, 340)).join('')}
+      </div>
+    </div>`;
+
+  const teamSection = profile.team ? `
+    <div class="site-section alt" id="site-equipe">
+      <span class="site-eyebrow-sm">Quem cuida de você</span>
+      <h4>Nossa equipe</h4>
+      <p class="sec-desc">As pessoas por trás de cada atendimento.</p>
+      <div class="site-team-grid">
+        ${teamImgs.map((t,idx)=>`
+          <div class="site-team-card">
+            ${siteImgWrap(slug+'-team'+idx, t, `Equipe de ${c.name}`, 300, 300)}
+            <strong class="editable" contenteditable="true">Nome ${idx+1}</strong>
+            <span class="editable" contenteditable="true">${teamRoles[idx] || 'Equipe'}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  const sectionMap = { about: aboutSection, services: servicesSection, gallery: gallerySection, team: teamSection };
+  const baseOrder = profile.team ? [...variant.order.slice(0,2), 'team', variant.order[2]] : variant.order;
+  const orderedSections = baseOrder.map(key => sectionMap[key] || '').join('');
+
+  shell.innerHTML = `
+    <div class="site-nav" style="background:${profile.palette[0]};">
+      <div class="site-logo editable" contenteditable="true">${c.name}</div>
+      <div class="site-links">
+        <a href="#site-sobre">Sobre</a><a href="#site-servicos">Serviços</a><a href="#site-galeria">Galeria</a><a href="#site-contato">Contato</a>
+      </div>
+    </div>
+
+    <div class="site-hero" data-hero-key="${slug}-hero">
+      ${heroImgTag(slug+'-hero', heroImg, 1200, 700, 'Capa de ' + c.name)}
+      <button type="button" class="img-edit-btn" style="position:absolute; top:14px; right:14px; z-index:3; opacity:.9;" onclick="regenerateSiteImage('${slug}-hero')">🔄 Trocar capa</button>
+      <button type="button" class="img-edit-btn" style="position:absolute; top:14px; right:130px; z-index:3; opacity:.9;" onclick="triggerSiteImageUpload('${slug}-hero')">📤 Minha foto</button>
+      <div class="site-hero-inner">
+        <span class="site-eyebrow">${c.city}, ${c.country}</span>
+        <h3 class="editable" contenteditable="true">${ai?.heroTitle || c.name}</h3>
+        <p class="editable" contenteditable="true">${ai?.heroSubtitle || `Atendimento de qualidade em ${c.niche.toLowerCase()}, com um estilo ${profile.style.toLowerCase()} para quem busca confiança em ${c.city}.`}</p>
+        <div class="site-cta-row">
+          <a href="${waLink}" target="_blank" style="text-decoration:none;"><span class="site-cta" style="background:${profile.palette[1]}; color:#111;">${ai?.ctaPrimary || 'Agende agora'}</span></a>
+          <a href="#site-servicos" style="text-decoration:none;"><span class="site-cta outline">${ai?.ctaSecondary || 'Ver serviços'}</span></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="site-stats">
+      <div class="site-stat"><b class="editable" contenteditable="true">10+</b><span>anos de experiência</span></div>
+      <div class="site-stat"><b class="editable" contenteditable="true">1.200+</b><span>clientes atendidos</span></div>
+      <div class="site-stat"><b class="editable" contenteditable="true">4.9★</b><span>avaliação média</span></div>
+    </div>
+
+    ${orderedSections}
+
+
+    <div class="site-section alt">
+      <span class="site-eyebrow-sm">Depoimentos</span>
+      <h4>O que dizem nossos clientes</h4>
+      <div class="site-testi-grid">
+        ${[0,1].map(i=>`
+          <div class="site-testi-card">
+            <div class="stars">★★★★★</div>
+            <p class="editable" contenteditable="true">"Atendimento excelente, superou minhas expectativas. Recomendo ${c.name} de olhos fechados."</p>
+            <div class="site-testi-who"><img src="${testiImgs[i]}" alt="Cliente"><span class="editable" contenteditable="true">${TESTI_NAMES[i]}</span></div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="site-section">
+      <span class="site-eyebrow-sm">Dúvidas frequentes</span>
+      <h4>Perguntas frequentes</h4>
+      ${faqList.map(f=>`<div class="site-faq-item"><strong class="editable" contenteditable="true">${f.q}</strong><p class="editable" contenteditable="true">${f.a}</p></div>`).join('')}
+    </div>
+
+    <div class="site-cta-banner" style="background:${profile.palette[0]};">
+      <h4 class="editable" contenteditable="true">${ai?.contactCtaTitle || 'Pronto para agendar com a gente?'}</h4>
+      <p class="editable" contenteditable="true">${ai?.contactCtaText || 'Entre em contato agora mesmo e garanta seu horário.'}</p>
+      <a href="${waLink}" target="_blank" style="text-decoration:none;"><span class="site-cta" style="background:${profile.palette[1]}; color:#111;">Falar agora</span></a>
+    </div>
+
+    <div class="site-section alt" id="site-contato">
+      <span class="site-eyebrow-sm">Contato</span>
+      <h4>Vamos conversar</h4>
+      <div class="site-contact-grid">
+        <div class="site-contact-info">
+          <div class="ci-row"><span class="ci-ico">📍</span><span class="editable" contenteditable="true">${c.city}, ${c.country}</span></div>
+          <div class="ci-row"><span class="ci-ico">📞</span><a href="${telLink}" style="color:inherit; text-decoration:none;"><span class="editable" contenteditable="true">${c.real && c.phone ? c.phone : '(00) 00000-0000'}</span></a></div>
+          <div class="ci-row"><span class="ci-ico">✉️</span><span class="editable" contenteditable="true">contato@${slug}.com.br</span></div>
+          <div class="ci-row"><span class="ci-ico">🕐</span><span class="editable" contenteditable="true">${c.openingHours?.length ? c.openingHours.join(' · ') : 'Seg a Sáb, 9h às 19h'}</span></div>
+          ${c.openNow!=null ? `<div class="ci-row"><span class="ci-ico">●</span><span class="badge" style="border-color:${c.openNow?'var(--green)':'var(--red)'}; color:${c.openNow?'var(--green)':'var(--red)'};">${c.openNow?'Aberto agora':'Fechado agora'} (Google, tempo real)</span></div>` : ''}
+        </div>
+        <form class="site-contact-form" id="site-contact-form-${slug}" onsubmit="return handleSiteContactForm(event)">
+          <input name="nome" placeholder="Seu nome" required>
+          <input name="email" type="email" placeholder="Seu e-mail" required>
+          <textarea name="mensagem" rows="3" placeholder="Sua mensagem" required></textarea>
+          <button type="submit" class="site-cta" style="background:${profile.palette[1]}; color:#111; border:none; cursor:pointer; display:inline-block; font-family:inherit;">Enviar mensagem</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="site-footer">
+      <div class="sf-logo">${c.name}</div>
+      <div class="sf-links">
+        <a href="#" style="color:inherit; text-decoration:none;" onclick="alert('Conecte o Instagram real da empresa em Configurações para este link funcionar.'); return false;">Instagram</a>
+        <a href="${waLink}" target="_blank" style="color:inherit; text-decoration:none;">WhatsApp</a>
+        <a href="https://www.google.com/maps/search/${encodeURIComponent(c.name + ' ' + c.city)}" target="_blank" style="color:inherit; text-decoration:none;">Google Maps</a>
+      </div>
+    </div>
+    <div class="image-credit">${c.__ownPhotosUsed ? 'Fotos reais do perfil desta empresa no Google — enviadas pelo próprio negócio ou por clientes.' : (realImages ? `Fotos reais buscadas automaticamente (Pexels)${realImages.hero?.photographer ? ' · capa: ' + realImages.hero.photographer : ''} — clique nas imagens pra trocar por outra ou enviar a sua.` : 'Imagens ilustrativas de banco de fotos livre (Picsum/Unsplash) — conecte o backend real em Configurações para busca automática de fotos condizentes com o nicho.')}</div>
+  `;
+  setSiteMode(true);
+
+  // Guarda (ou atualiza) o projeto com o snapshot completo do site — permite reabrir depois
+  let proj = projects.find(p=>p.companyId===c.id);
+  if(proj){
+    proj.company = c;
+    proj.status = proj.status === "Publicado" ? "Publicado" : "Pronto";
+  } else {
+    proj = {
+      id: 'p'+Date.now(),
+      companyId: c.id,
+      name: c.name,
+      niche: c.niche,
+      status: "Pronto",
+      date: new Date().toLocaleDateString('pt-BR'),
+      company: c
+    };
+    projects.push(proj);
+  }
+  renderWebsites();
+  updateDashboardStats();
+
+  document.getElementById('btn-add-lead').onclick = ()=>{ addLead(c.id,"Site Gerado"); };
+  document.getElementById('btn-proposta').onclick = ()=>{ alert('Proposta gerada (demo): apresentação, benefícios, funcionalidades, prazo e preço editáveis — pronta para exportar.'); };
+  document.getElementById('btn-publicar').onclick = ()=>{ proj.status="Publicado"; renderWebsites(); updateDashboardStats(); alert('Site publicado (demo).'); };
+  document.getElementById('btn-download-site').onclick = ()=> downloadGeneratedSite(c);
+}
+
+// ---------------- BAIXAR SITE (arquivo HTML independente, pronto pra mandar ao cliente) ----------------
+function downloadGeneratedSite(c){
+  // Trava a edição antes de exportar — o arquivo baixado é sempre a versão "final" (sem botões de editar)
+  setSiteMode(false);
+
+  const shell = document.getElementById('site-shell');
+  const shellClasses = shell.className; // preserva a variante de layout (capa, cantos) desta empresa
+  const bodyHtml = shell.innerHTML; // já inclui qualquer edição de texto/imagem que você fez
+
+  // Reaproveita todo o CSS já carregado na página (a única tag <style> tem todas as regras .site-*)
+  const css = document.querySelector('style')?.innerHTML || '';
+
+  const doc = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${c.name}</title>
+<meta name="description" content="Site institucional de ${c.name} — ${c.niche} em ${c.city}, ${c.country}.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+${css}
+/* No arquivo baixado o site ocupa a tela toda, sem o modal do app */
+.site-shell{ max-width:100%; border-radius:0; margin:0; }
+.img-edit-overlay, .img-edit-btn{ display:none !important; } /* sem controles de edição no arquivo final */
+</style>
+</head>
+<body>
+<div class="${shellClasses}">
+${bodyHtml}
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const slug = c.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-');
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `site-${slug}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(url), 2000);
+}
+document.getElementById('close-site').addEventListener('click', ()=> document.getElementById('site-overlay').classList.remove('show'));
+
+// Reabre um site já gerado anteriormente, a partir do snapshot salvo no projeto
+function openSavedWebsite(projId){
+  const proj = projects.find(p=>p.id===projId);
+  if(!proj || !proj.company) return;
+  document.getElementById('site-title').textContent = `${proj.company.name}`;
+  document.getElementById('site-overlay').classList.add('show');
+  document.getElementById('site-loading').classList.add('hidden');
+  document.getElementById('site-preview-wrap').classList.remove('hidden');
+  renderSitePreview(proj.company);
+}
+
+// ---------------- WEBSITES ----------------
+function renderWebsites(){
+  const grid = document.getElementById('websites-grid');
+  const empty = document.getElementById('websites-empty');
+  grid.innerHTML = '';
+  if(projects.length===0){ empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  projects.forEach(p=>{
+    const div = document.createElement('div');
+    div.className='company-card';
+    div.innerHTML = `
+      <div class="company-name">${p.name}<span class="demo-tag">DEMO</span></div>
+      <div class="company-meta">${p.niche} · criado em ${p.date}</div>
+      <div class="status-badges"><span class="badge">${p.status}</span></div>
+      <div class="card-actions">
+        <button class="btn-mini primary" data-open-site="${p.id}">🔗 Abrir site</button>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+  grid.querySelectorAll('[data-open-site]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openSavedWebsite(btn.dataset.openSite));
+  });
+}
+
+// ---------------- LEADS ----------------
+const KANBAN_COLS = ["Novo","Analisado","Site Gerado","Contato Pendente","Em negociação","Cliente","Arquivado"];
+// ---------------- PREPARAR CONTATO (mensagem assistida por IA + WhatsApp real) ----------------
+async function openContactPrep(id){
+  const c = allCompanies.find(x=>x.id===id) || projects.find(p=>p.companyId===id);
+  const company = allCompanies.find(x=>x.id===id);
+  if(!company || !company.phone) return;
+
+  document.getElementById('contact-title').textContent = `Contato com ${company.name}`;
+  document.getElementById('contact-sub').textContent = `📞 ${company.phone} · ${company.niche}`;
+  const textarea = document.getElementById('contact-message');
+  textarea.value = 'Gerando mensagem...';
+  document.getElementById('contact-overlay').classList.add('show');
+
+  const phoneDigits = company.phone.replace(/[^\d]/g,''); // wa.me exige só dígitos, com código do país
+  const meuNome = (typeof userProfile !== 'undefined' && userProfile.name) ? userProfile.name : 'Fred';
+
+  let message;
+
+  if(company.aiSite){
+    // O site dessa empresa já foi gerado — a mensagem lidera com isso, não com uma proposta abstrata
+    message = `Olá! Tudo bem? Meu nome é ${meuNome}.\n\nEu já fiz um site pro ${company.name} — "${company.aiSite.heroTitle || company.name}". Ficou com fotos reais de vocês, telefone e endereço certinhos. É só pra você ver como fica, sem compromisso.\n\nQuer que eu te mande o link?`;
+  } else if(backendConnected && backendUrl){
+    // Site ainda não foi gerado pra essa empresa — pede pra IA escrever uma mensagem curta e natural
+    try{
+      const resp = await fetch(backendUrl + '/api/ai/analyze-company', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ name:company.name, niche:company.niche, city:company.city, hasWebsite:company.hasWebsite })
+      });
+      if(resp.ok){
+        const data = await resp.json();
+        const oportunidade = data?.analysis?.oportunidadesDigitais?.[0] || '';
+        message = `Olá! Tudo bem? Meu nome é ${meuNome}.\n\nEstou preparando um site pro ${company.name}${oportunidade ? ' — ' + oportunidade.toLowerCase() : ''}. Quando terminar te mando pra você ver, sem compromisso. Só confirmando: esse é o melhor número pra falar com vocês?`;
+      } else {
+        message = defaultOutreachMessage(company);
+      }
+    }catch(e){ message = defaultOutreachMessage(company); }
+  } else {
+    message = defaultOutreachMessage(company);
+  }
+
+  textarea.value = message;
+  document.getElementById('contact-whatsapp').href = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
+  document.getElementById('contact-call').href = `tel:${company.phone.replace(/\s+/g,'')}`;
+  document.getElementById('contact-whatsapp').onclick = ()=>{
+    document.getElementById('contact-whatsapp').href = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(textarea.value)}`;
+  };
+}
+
+function defaultOutreachMessage(c){
+  const meuNome = (typeof userProfile !== 'undefined' && userProfile.name) ? userProfile.name : 'Fred';
+  return `Olá! Tudo bem? Meu nome é ${meuNome}, trabalho com criação de sites para negócios locais.\n\nVi que o ${c.name} tem ótima reputação (${c.rating ? c.rating + '★' : 'boa avaliação'} no Google)${c.hasWebsite ? '' : ', mas ainda não tem um site próprio'}. Estou preparando um site pronto pra vocês, com fotos e informações reais do negócio — é só dar uma olhada, sem compromisso, quando ficar pronto.\n\nEsse é o melhor número pra falar com vocês?`;
+}
+
+document.getElementById('close-contact').addEventListener('click', ()=> document.getElementById('contact-overlay').classList.remove('show'));
+document.getElementById('contact-copy').addEventListener('click', ()=>{
+  const ta = document.getElementById('contact-message');
+  ta.select();
+  document.execCommand('copy');
+  const btn = document.getElementById('contact-copy');
+  const original = btn.textContent;
+  btn.textContent = 'Copiado ✓';
+  setTimeout(()=> btn.textContent = original, 1500);
+});
+
+function addLead(companyId, stage){
+  const c = allCompanies.find(x=>x.id===companyId);
+  if(!c) return;
+  let existing = leads.find(l=>l.companyId===companyId);
+  if(existing){ existing.stage = stage; }
+  else{ leads.push({companyId, name:c.name, niche:c.niche, stage}); }
+  renderLeads();
+  updateDashboardStats();
+}
+function renderLeads(){
+  const kanban = document.getElementById('kanban');
+  kanban.innerHTML = '';
+  KANBAN_COLS.forEach(col=>{
+    const items = leads.filter(l=>l.stage===col);
+    const div = document.createElement('div');
+    div.className='kanban-col';
+    div.innerHTML = `<h5>${col} <span>${items.length}</span></h5>` +
+      items.map(l=>`<div class="kanban-card"><div class="lname">${l.name}</div><div class="lmeta">${l.niche}</div></div>`).join('');
+    kanban.appendChild(div);
+  });
+}
+
+// ---------------- DASHBOARD ----------------
+function updateDashboardStats(){
+  document.getElementById('stat-companies').textContent = allCompanies.length;
+  document.getElementById('stat-sites').textContent = projects.length;
+  document.getElementById('stat-leads').textContent = leads.length;
+  document.getElementById('stat-neg').textContent = leads.filter(l=>l.stage==="Em negociação").length;
+  document.getElementById('stat-projects').textContent = projects.filter(p=>p.status==="Rascunho"||p.status==="Gerando").length;
+  document.getElementById('uso-analises').textContent = Math.min(20, leads.length + projects.length) + "/20";
+  document.getElementById('uso-sites').textContent = Math.min(5, projects.length) + "/5";
+  document.getElementById('uso-tokens').textContent = (projects.length*1800 + leads.length*400).toLocaleString('pt-BR');
+  saveState();
+}
+
+function renderChart(){
+  const chart = document.getElementById('chart');
+  const vals = [30,52,41,68,77,60,89];
+  chart.innerHTML = vals.map(v=>`<div class="bar" style="height:${v}%"></div>`).join('');
+}
+// ---------------- PERFIL LOCAL (identificação simples neste navegador) ----------------
+let userProfile = { name: '', email: '' };
+
+function applyProfileToUI(){
+  const h1 = document.querySelector('.topbar h1');
+  if(h1) h1.textContent = `Olá, ${userProfile.name || 'visitante'}`;
+  const nameInput = document.getElementById('profile-name');
+  const emailInput = document.getElementById('profile-email');
+  if(nameInput) nameInput.value = userProfile.name || '';
+  if(emailInput) emailInput.value = userProfile.email || '';
+}
+
+function startAppFor(email, nameTyped){
+  currentEmail = email.toLowerCase().trim();
+  localStorage.setItem(LAST_EMAIL_KEY, currentEmail);
+  const restored = loadState(currentEmail); // traz empresas, sites, leads e a última tela dessa conta
+  if(!userProfile.name) userProfile.name = nameTyped || currentEmail.split('@')[0];
+  if(!userProfile.email) userProfile.email = currentEmail;
+
+  document.getElementById('login-gate').classList.remove('show');
+  applyProfileToUI();
+  renderChart();
+  renderLeads();
+  renderCompanies();
+  renderWebsites();
+  updateDashboardStats();
+  showView(restored?.currentView || 'dashboard'); // volta exatamente pra tela onde você parou
+
+  // Testa a conexão com o backend sozinho, assim que o app abre — sem precisar clicar em nada
+  const savedBackendUrl = document.getElementById('backend-url').value.trim();
+  if(savedBackendUrl) testBackend();
+}
+
+// Pré-preenche com o último e-mail usado neste navegador, pra só confirmar
+const lastEmail = localStorage.getItem(LAST_EMAIL_KEY);
+if(lastEmail) document.getElementById('login-email').value = lastEmail;
+
+document.getElementById('btn-enter-app').addEventListener('click', ()=>{
+  const email = document.getElementById('login-email').value.trim();
+  const name = document.getElementById('login-name').value.trim();
+  if(!email || !email.includes('@')){
+    alert('Digite um e-mail válido pra continuar.');
+    return;
+  }
+  startAppFor(email, name);
+});
+// Enter no campo de e-mail também entra
+document.getElementById('login-email').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') document.getElementById('btn-enter-app').click();
+});
+</script>
+<script>
+/* ================= ENHANCED AI WEBSITE HUNTER =================
+   Adds nationwide city coverage, broad business categories, social enrichment,
+   deduplication/ranking and Pexels-first image generation without exposing API keys.
+*/
+(function(){
+  const cityInput=document.getElementById('f-cidade');
+  const nicheSelect=document.getElementById('f-nicho');
+  const cityDatalist=document.getElementById('cidades-cobertura');
+  let citiesLoaded=false;
+  async function loadBrazilCities(){
+    if(!cityDatalist || citiesLoaded) return;
+    try{
+      const r=await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
+      if(!r.ok) throw new Error('IBGE '+r.status);
+      const cities=await r.json();
+      const frag=document.createDocumentFragment();
+      cities.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')).forEach(c=>{const o=document.createElement('option');o.value=c.nome;frag.appendChild(o)});
+      cityDatalist.innerHTML='';cityDatalist.appendChild(frag);citiesLoaded=true;
+    }catch(e){ console.warn('Não foi possível carregar municípios do IBGE',e); }
+  }
+  loadBrazilCities();
+  document.getElementById('btn-load-cities')?.addEventListener('click',loadBrazilCities);
+
+  function selectedSources(){
+    return [...document.querySelectorAll('#chip-fontes .chip.selected')].map(x=>x.dataset.val);
+  }
+  function normalizePhone(p){return (p||'').replace(/\D/g,'')}
+  function dedupeCompanies(list){
+    const map=new Map();
+    for(const c of list){
+      const key=(c.placeId||c.id||((c.name||'')+'|'+(c.address||c.city||'')).toLowerCase().replace(/\W+/g,'')).toString();
+      if(!map.has(key)) map.set(key,c);
+    }
+    return [...map.values()];
+  }
+  function normalizeResult(c,nicho,cidade){
+    const phone=c.phone||c.nationalPhoneNumber||c.internationalPhoneNumber||'';
+    const score=Number.isFinite(Number(c.score))?Number(c.score):computeScore({presenca:c.hasWebsite?'Website existente':'Sem website'});
+    // Fotos reais do perfil da empresa no Google Places vêm como caminho relativo
+    // (a chave fica só no backend) — aqui completamos com a URL do backend conectado.
+    const photos = Array.isArray(c.photos) ? c.photos.map(p => p.startsWith('http') ? p : backendUrl + p) : [];
+    return {
+      ...c,
+      id:c.id||c.placeId||('live-'+Math.random().toString(36).slice(2)),
+      name:c.name||c.displayName?.text||'Empresa', niche:c.niche||nicho, city:c.city||cidade||'Brasil', country:c.country||'Brasil',
+      phone, hasWebsite:!!c.hasWebsite, website:c.website||c.websiteUri||'', presenca:c.hasWebsite?'Website existente':'Sem website',
+      real:true, live:true, social:!!(c.instagram||c.facebook||c.whatsapp||c.socials), score, photos,
+      relevance:Number.isFinite(Number(c.relevance))?Number(c.relevance):computeRelevance({...c,city:c.city||cidade,niche:c.niche||nicho,address:c.address||''},nicho,cidade||'')
+    };
+  }
+  async function enhancedSearch(){
+    const pais=document.getElementById('f-pais')?.value||'Brasil';
+    const cidade=(cityInput?.value||'').trim();
+    const nicho=nicheSelect?.value||'Todos os tipos de empresa';
+    const qtd=parseInt(document.getElementById('f-qtd')?.value||'25',10);
+    const allCities=document.getElementById('f-todas-cidades')?.checked && !cidade;
+    const enrich=document.getElementById('f-enriquecer-sociais')?.checked;
+    const dedupe=document.getElementById('f-remover-duplicados')?.checked;
+    const sources=selectedSources();
+    const presencaSelected=[...document.querySelectorAll('#chip-presenca .chip.selected')].map(x=>x.dataset.val);
+    const tamanhoSelected=[...document.querySelectorAll('#chip-tamanho .chip.selected')].map(x=>x.dataset.val);
+    const box=document.getElementById('loading-box'),fill=document.getElementById('progress-fill'),step=document.getElementById('loading-step'),btn=document.getElementById('btn-buscar');
+    box.classList.add('show');btn.disabled=true;fill.style.width='8%';
+    const payload={pais,cidade: cidade||null,todasCidades:!!allCities,nicho,todosNichos:nicho==='Todos os tipos de empresa',quantidade:qtd,fontes:sources,enriquecerSociais:!!enrich,removerDuplicados:!!dedupe,presencaDigital:presencaSelected,tamanho:tamanhoSelected,municipiosEndpoint:'https://servicodados.ibge.gov.br/api/v1/localidades/municipios'};
+    window.__lastRequestedQtd=qtd;window.__lastSearchCidade=cidade||'todas as cidades do Brasil';window.__lastSearchNicho=nicho;
+
+    function applyExtraFilters(list){
+      let out=list;
+      if(tamanhoSelected.length) out=out.filter(c=>tamanhoSelected.includes(c.size));
+      if(presencaSelected.length){
+        out=out.filter(c=>{
+          if(presencaSelected.includes('Sem website') && !c.hasWebsite) return true;
+          if(presencaSelected.includes('Website existente') && c.hasWebsite) return true;
+          if(presencaSelected.includes(c.presenca)) return true;
+          return false;
+        });
+      }
+      return out;
+    }
+
+    if(backendConnected&&backendUrl){
+      try{
+        step.textContent='Consultando Google Places e fontes autorizadas...';fill.style.width='28%';
+        const r=await fetch(backendUrl+'/api/companies/search-advanced',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        if(!r.ok) throw new Error('status '+r.status);
+        const data=await r.json();fill.style.width='78%';step.textContent='Deduplicando e ranqueando oportunidades...';
+        let normalized=dedupeCompanies(data.companies||[]).map(c=>normalizeResult(c,nicho,cidade));
+        normalized=normalized.map(c=>({...c, size: (c.ratingCount||0)>2000?'Média':'Pequena'}));
+        allCompanies=applyExtraFilters(normalized).slice(0,qtd);
+        fill.style.width='100%';step.textContent='Busca concluída!';
+        setTimeout(()=>{box.classList.remove('show');btn.disabled=false;renderCompanies();showView('empresas');updateDashboardStats()},350);
+        return;
+      }catch(e){console.warn(e);alert('O backend avançado não respondeu. Vou mostrar os dados disponíveis nesta demo.');}
+    }
+    // Demo fallback: only uses the file's real pre-collected records; never invents companies.
+    step.textContent='Consultando base real disponível nesta demonstração...';fill.style.width='50%';
+    setTimeout(()=>{
+      let list=REAL_COMPANIES_RAW.map(realToCompany);
+      if(cidade) list=list.filter(c=>normalizeCity(c.city).includes(normalizeCity(cidade))||normalizeCity(cidade).includes(normalizeCity(c.city)));
+      if(nicho!=='Todos os tipos de empresa') list=list.filter(c=>c.niche===nicho);
+      list=applyExtraFilters(list);
+      list=list.map(c=>({...c,relevance:computeRelevance(c,nicho==='Todos os tipos de empresa'?c.niche:nicho,cidade||c.city)})).sort((a,b)=>b.relevance-a.relevance);
+      allCompanies=(dedupe?dedupeCompanies(list):list).slice(0,qtd);
+      fill.style.width='100%';step.textContent='Busca concluída!';
+      setTimeout(()=>{box.classList.remove('show');btn.disabled=false;renderCompanies();showView('empresas');updateDashboardStats()},350);
+    },500);
+  }
+  const searchBtn=document.getElementById('btn-buscar');
+  if(searchBtn){
+    searchBtn.addEventListener('click',function(e){e.preventDefault();enhancedSearch();});
+  }
+
+})();
+</script></body>
+</html>
