@@ -12,6 +12,11 @@
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json({limit:'1mb'}));
@@ -36,6 +41,8 @@ function relevance(item, niche, city){
   return Math.min(100, score);
 }
 
+// Empresa real vinda da Local Business Data API (formato próprio da OpenWeb Ninja),
+// normalizada pro formato que o frontend do AI Website Hunter espera.
 function normalizeBusiness(x, niche, city){
   const photos = uniq([
     ...(Array.isArray(x.photos_sample) ? x.photos_sample : []),
@@ -73,7 +80,7 @@ app.get('/api/health', (req,res)=>res.json({
   imageSearchConfigured: !!PEXELS_KEY,
   provider: OWN_KEY ? 'openwebninja-local-business-data' : 'not-configured',
   pexelsConfigured: !!PEXELS_KEY,
-  googlePlacesConfigured: !!OWN_KEY,
+  googlePlacesConfigured: !!OWN_KEY, // compatibilidade com o frontend, que exibe esse rótulo
   openAiConfigured: false,
 }));
 
@@ -85,7 +92,7 @@ app.post('/api/companies/search-advanced', async (req,res)=>{
     if(!OWN_KEY) return res.status(503).json({companies:[],error:'Configure OPENWEBNINJA_API_KEY no backend (gratuito em openwebninja.com).'});
 
     const query = [niche && niche !== 'Todos os tipos de empresa' ? niche : 'empresas', city && city !== 'todas as cidades do Brasil' ? 'em '+city : '', 'Brasil'].filter(Boolean).join(' ');
-    const limit = Math.min(20, Number(b.quantidade || 25));
+    const limit = Math.min(20, Number(b.quantidade || 25)); // free tier: use com moderação (500/mês no total)
 
     const url = new URL(OWN_SEARCH_URL);
     url.searchParams.set('query', query);
@@ -104,6 +111,8 @@ app.post('/api/companies/search-advanced', async (req,res)=>{
   }catch(e){res.status(502).json({companies:[],error:e.message});}
 });
 
+// Imagens de banco (Pexels) — só usadas como reforço quando a empresa não tem
+// fotos suficientes vindas do Google Maps.
 app.get('/api/images/search', async (req,res)=>{
   try{
     const q=clean(req.query.query);
@@ -121,6 +130,14 @@ app.get('/api/images/search', async (req,res)=>{
     }));
     res.json({images});
   }catch(e){res.status(502).json({images:[],error:e.message});}
+});
+
+// Serve o próprio app (index.html) neste mesmo endereço — assim o site e a
+// API ficam na mesma origem, sem nenhum problema de conexão entre navegador e backend.
+app.use(express.static(__dirname, { index: 'index.html' }));
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'not found' });
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT,()=>console.log(`Business Discovery Engine ativo em http://localhost:${PORT}`));
